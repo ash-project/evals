@@ -1,0 +1,9 @@
+type: write_code_and_assert
+messages:
+  - type: user
+    text: |
+      Write a function called `add` that adds two numbers. Return just the function, not wrapped in a module
+eval:
+  assert:
+    gets_module: true
+    assertion: "<%= @module_name %>.add(2, 3) == 5"
