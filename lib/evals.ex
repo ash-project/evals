@@ -134,7 +134,7 @@ defmodule Evals do
 
   defp grade(%{type: :write_code_and_assert, eval: %{assert: assert}} = eval, result, tmp_dir) do
     {code, assigns} =
-      if assert[:gets_module] == true do
+      if assert[:wrap_in_module] == true do
         mod =
           "Generated#{System.unique_integer([:positive])}"
 
@@ -383,7 +383,7 @@ defmodule Evals do
       eval
       |> remap_key("assert", :assert, fn assert ->
         assert
-        |> remap_key("gets_module", :gets_module)
+        |> remap_key("wrap_in_module", :wrap_in_module)
         |> remap_key(
           "assertion",
           :assertion
