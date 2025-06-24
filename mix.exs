@@ -17,7 +17,8 @@ defmodule Evals.MixProject do
       {:langchain, "~> 0.3"},
       {:yaml_elixir, "~> 2.0"},
       {:spark, "~> 2.2"},
-      {:igniter, "~> 0.6", only: [:dev, :test]}
+      {:igniter, "~> 0.6", only: [:dev, :test]},
+      {:mock, "~> 0.3.9", only: :test}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]

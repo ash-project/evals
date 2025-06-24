@@ -27,8 +27,11 @@ defmodule Evals.Formatter do
 
   ## Examples
 
+      iex> results = %{{"model1", "cat1", "test1", false} => 0.8}
+      iex> opts = %Evals.Options{iterations: 1, usage_rules: false}
       iex> Evals.Formatter.format_report(results, opts, title: "My Report", format: :summary)
-      "EVALUATION REPORT\\n..."
+      ...> |> String.contains?("My Report")
+      true
   """
   @spec format_report(map(), Evals.Options.t(), keyword()) :: String.t()
   def format_report(results, opts, report_opts \\ []) do
