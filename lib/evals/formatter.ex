@@ -1,10 +1,10 @@
 defmodule Evals.Formatter do
   @moduledoc """
-  Handles formatting of evaluation results into human-readable reports.
+  Handles formatting of evaluation results into Markdown reports.
   """
 
   @doc """
-  Formats evaluation results into a report string.
+  Formats evaluation results into a Markdown report string.
 
   Takes raw evaluation results and formats them into a report with summaries
   and detailed breakdowns by category and test.
@@ -23,59 +23,56 @@ defmodule Evals.Formatter do
 
   ## Returns
 
-  A formatted report string.
-
-  ## Examples
-
-      iex> results = %{{"model1", "cat1", "test1", "default", false} => 0.8}
-      iex> opts = %Evals.Options{iterations: 1, usage_rules: false}
-      iex> Evals.Formatter.format_report(results, opts, title: "My Report", format: :summary)
-      ...> |> String.contains?("My Report")
-      true
+  A formatted Markdown report string.
   """
   @spec format_report(map(), Evals.Options.t(), keyword()) :: String.t()
   def format_report(results, opts, report_opts \\ []) do
-    lines = []
-
     title = Keyword.get(report_opts, :title, "EVALUATION REPORT")
-    lines = lines ++ ["# " <> title]
-    lines = lines ++ ["Iterations: #{opts.iterations}"]
-    lines = lines ++ ["---"]
-
-    # Overall summary
-    lines = lines ++ ["\nOVERALL SUMMARY:"]
-    lines = lines ++ ["---"]
-
-    model_summary_lines = format_model_summary(results, opts)
-    lines = lines ++ model_summary_lines
-
     format = Keyword.get(report_opts, :format, :full)
 
-    lines =
+    sections = [
+      "# #{title}",
+      "",
+      "**Iterations:** #{opts.iterations}",
+      "",
+      "## Overall Summary",
+      "",
+      format_overall_summary(results, opts)
+    ]
+
+    sections =
       case format do
         :summary ->
-          lines ++ ["\n---"]
+          sections
 
         :full ->
-          detailed_lines = format_detailed_results(results, opts)
-          lines ++ detailed_lines ++ ["\n---"]
+          sections ++
+            [
+              "",
+              "## Category Summaries",
+              "",
+              format_category_summaries(results, opts),
+              "",
+              "## Detailed Results",
+              "",
+              format_detailed_results(results, opts)
+            ]
       end
 
-    Enum.join(lines, "\n")
+    Enum.join(sections, "\n")
   end
 
-  @spec format_model_summary(map(), Evals.Options.t()) :: [String.t()]
-  defp format_model_summary(results, opts) do
+  @spec format_overall_summary(map(), Evals.Options.t()) :: String.t()
+  defp format_overall_summary(results, opts) do
     if opts.usage_rules == :compare do
-      format_usage_rules_comparison(results)
+      format_usage_rules_comparison_table(results)
     else
-      format_simple_model_averages(results)
+      format_simple_model_table(results)
     end
   end
 
-  @spec format_usage_rules_comparison(map()) :: [String.t()]
-  defp format_usage_rules_comparison(results) do
-    # Break down by usage rules when comparing
+  @spec format_usage_rules_comparison_table(map()) :: String.t()
+  defp format_usage_rules_comparison_table(results) do
     results_by_model_and_rules =
       results
       |> Enum.group_by(fn {{model_name, _, _, _, usage_rules}, _} ->
@@ -100,24 +97,22 @@ defmodule Evals.Formatter do
       end)
       |> Enum.sort_by(fn {_, score} -> score end, :desc)
 
-    with_rules_lines =
-      ["", "With usage rules:"] ++
-        Enum.map(with_rules_averages, fn {model_name, avg_score} ->
-          "  #{String.pad_trailing(model_name, 18)} | #{Float.round(avg_score * 100, 1)}%"
-        end)
+    with_rules_table = format_score_table(with_rules_averages)
+    without_rules_table = format_score_table(without_rules_averages)
 
-    without_rules_lines =
-      ["", "Without usage rules:"] ++
-        Enum.map(without_rules_averages, fn {model_name, avg_score} ->
-          "  #{String.pad_trailing(model_name, 18)} | #{Float.round(avg_score * 100, 1)}%"
-        end)
+    """
+    ### With Usage Rules
 
-    with_rules_lines ++ without_rules_lines
+    #{with_rules_table}
+
+    ### Without Usage Rules
+
+    #{without_rules_table}
+    """
   end
 
-  @spec format_simple_model_averages(map()) :: [String.t()]
-  defp format_simple_model_averages(results) do
-    # Group results by model for better organization
+  @spec format_simple_model_table(map()) :: String.t()
+  defp format_simple_model_table(results) do
     results_by_model =
       results
       |> Enum.group_by(fn {{model_name, _, _, _, _}, _} -> model_name end)
@@ -129,55 +124,59 @@ defmodule Evals.Formatter do
       end)
       |> Enum.sort_by(fn {_, score} -> score end, :desc)
 
-    Enum.map(model_averages, fn {model_name, avg_score} ->
-      "#{String.pad_trailing(model_name, 20)} | #{Float.round(avg_score * 100, 1)}%"
-    end)
+    format_score_table(model_averages)
   end
 
-  @spec format_detailed_results(map(), Evals.Options.t()) :: [String.t()]
-  defp format_detailed_results(results, opts) do
-    lines = ["\nCATEGORY SUMMARIES:"]
-    lines = lines ++ [String.duplicate("-", 80)]
+  @spec format_score_table([{String.t(), float()}]) :: String.t()
+  defp format_score_table(model_scores) do
+    header = "| Model | Score |"
+    separator = "|-------|-------|"
 
+    rows =
+      Enum.map(model_scores, fn {model_name, avg_score} ->
+        percentage = Float.round(avg_score * 100, 1)
+        "| #{model_name} | #{percentage}% |"
+      end)
+
+    Enum.join([header, separator | rows], "\n")
+  end
+
+  @spec format_category_summaries(map(), Evals.Options.t()) :: String.t()
+  defp format_category_summaries(results, opts) do
     categories =
       results
       |> Enum.map(fn {{_, category, _, _, _}, _} -> category end)
       |> Enum.uniq()
       |> Enum.sort()
 
-    category_summary_lines =
-      Enum.flat_map(categories, fn category ->
+    category_sections =
+      Enum.map(categories, fn category ->
         format_category_summary(results, category, opts)
       end)
 
-    lines = lines ++ category_summary_lines
-
-    lines = lines ++ ["\nDETAILED RESULTS:"]
-    lines = lines ++ [String.duplicate("-", 80)]
-
-    category_lines =
-      Enum.flat_map(categories, fn category ->
-        format_category_results(results, category, opts)
-      end)
-
-    lines ++ category_lines
+    Enum.join(category_sections, "\n\n")
   end
 
-  @spec format_category_summary(map(), String.t(), Evals.Options.t()) :: [String.t()]
+  @spec format_category_summary(map(), String.t(), Evals.Options.t()) :: String.t()
   defp format_category_summary(results, category, opts) do
     category_results =
       results
       |> Enum.filter(fn {{_, cat, _, _, _}, _} -> cat == category end)
 
-    if opts.usage_rules == :compare do
-      format_category_usage_rules_comparison(category_results, category)
-    else
-      format_simple_category_averages(category_results, category)
-    end
+    category_title = "### #{String.upcase(category)}"
+
+    summary_content =
+      if opts.usage_rules == :compare do
+        format_category_usage_rules_comparison(category_results)
+      else
+        format_simple_category_averages(category_results)
+      end
+
+    "#{category_title}\n\n#{summary_content}"
   end
 
-  @spec format_category_usage_rules_comparison(list(), String.t()) :: [String.t()]
-  defp format_category_usage_rules_comparison(category_results, category) do
+  @spec format_category_usage_rules_comparison(list()) :: String.t()
+  defp format_category_usage_rules_comparison(category_results) do
     results_by_model_and_rules =
       category_results
       |> Enum.group_by(fn {{model_name, _, _, _, usage_rules}, _} ->
@@ -202,23 +201,22 @@ defmodule Evals.Formatter do
       end)
       |> Enum.sort_by(fn {_, score} -> score end, :desc)
 
-    with_rules_lines =
-      ["", "#{String.upcase(category)} - With usage rules:"] ++
-        Enum.map(with_rules_averages, fn {model_name, avg_score} ->
-          "  #{String.pad_trailing(model_name, 18)} | #{Float.round(avg_score * 100, 1)}%"
-        end)
+    with_rules_table = format_score_table(with_rules_averages)
+    without_rules_table = format_score_table(without_rules_averages)
 
-    without_rules_lines =
-      ["", "#{String.upcase(category)} - Without usage rules:"] ++
-        Enum.map(without_rules_averages, fn {model_name, avg_score} ->
-          "  #{String.pad_trailing(model_name, 18)} | #{Float.round(avg_score * 100, 1)}%"
-        end)
+    """
+    **With Usage Rules:**
 
-    with_rules_lines ++ without_rules_lines
+    #{with_rules_table}
+
+    **Without Usage Rules:**
+
+    #{without_rules_table}
+    """
   end
 
-  @spec format_simple_category_averages(list(), String.t()) :: [String.t()]
-  defp format_simple_category_averages(category_results, category) do
+  @spec format_simple_category_averages(list()) :: String.t()
+  defp format_simple_category_averages(category_results) do
     results_by_model =
       category_results
       |> Enum.group_by(fn {{model_name, _, _, _, _}, _} -> model_name end)
@@ -230,14 +228,27 @@ defmodule Evals.Formatter do
       end)
       |> Enum.sort_by(fn {_, score} -> score end, :desc)
 
-    ["", "#{String.upcase(category)}:"] ++
-      Enum.map(model_averages, fn {model_name, avg_score} ->
-        "  #{String.pad_trailing(model_name, 18)} | #{Float.round(avg_score * 100, 1)}%"
-      end)
+    format_score_table(model_averages)
   end
 
-  @spec format_category_results(map(), String.t(), Evals.Options.t()) :: [String.t()]
-  defp format_category_results(results, category, opts) do
+  @spec format_detailed_results(map(), Evals.Options.t()) :: String.t()
+  defp format_detailed_results(results, opts) do
+    categories =
+      results
+      |> Enum.map(fn {{_, category, _, _, _}, _} -> category end)
+      |> Enum.uniq()
+      |> Enum.sort()
+
+    category_sections =
+      Enum.map(categories, fn category ->
+        format_detailed_category_results(results, category, opts)
+      end)
+
+    Enum.join(category_sections, "\n\n")
+  end
+
+  @spec format_detailed_category_results(map(), String.t(), Evals.Options.t()) :: String.t()
+  defp format_detailed_category_results(results, category, opts) do
     category_results =
       results
       |> Enum.filter(fn {{_, cat, _, _, _}, _} -> cat == category end)
@@ -245,37 +256,50 @@ defmodule Evals.Formatter do
         {name, assertion_name, usage_rules}
       end)
 
-    test_lines =
-      Enum.flat_map(category_results, fn {{name, assertion_name, usage_rules}, test_results} ->
-        format_test_results(name, assertion_name, usage_rules, test_results, opts)
+    category_title = "### #{String.upcase(category)}"
+
+    test_sections =
+      category_results
+      |> Enum.sort_by(fn {{name, assertion_name, _}, _} -> {name, assertion_name} end)
+      |> Enum.map(fn {{name, assertion_name, usage_rules}, test_results} ->
+        format_test_results_table(name, assertion_name, usage_rules, test_results, opts)
       end)
 
-    ["\n#{String.upcase(category)}:"] ++ test_lines
+    "#{category_title}\n\n#{Enum.join(test_sections, "\n\n")}"
   end
 
-  @spec format_test_results(String.t(), String.t(), boolean(), list(), Evals.Options.t()) :: [
+  @spec format_test_results_table(String.t(), String.t(), boolean(), list(), Evals.Options.t()) ::
           String.t()
-        ]
-  defp format_test_results(name, assertion_name, usage_rules, test_results, opts) do
+  defp format_test_results_table(name, assertion_name, usage_rules, test_results, opts) do
     usage_suffix = if usage_rules, do: " (with usage rules)", else: " (no usage rules)"
     assertion_suffix = if assertion_name != "default", do: " - #{assertion_name}", else: ""
 
-    test_header =
+    test_title =
       if opts.usage_rules == :compare do
-        "  #{name}#{assertion_suffix}#{usage_suffix}:"
+        "**#{name}#{assertion_suffix}#{usage_suffix}**"
       else
-        "  #{name}#{assertion_suffix}:"
+        "**#{name}#{assertion_suffix}**"
       end
 
-    result_lines =
+    model_scores =
       test_results
       |> Enum.sort_by(fn {{model_name, _, _, _, _}, _} -> model_name end)
       |> Enum.map(fn {{model_name, _, _, _, _}, score} ->
         percentage = Float.round(score * 100, 1)
-        "    #{String.pad_trailing(model_name, 20)} | #{percentage}%"
+        {model_name, percentage}
       end)
 
-    [test_header] ++ result_lines
+    header = "| Model | Score |"
+    separator = "|-------|-------|"
+
+    rows =
+      Enum.map(model_scores, fn {model_name, percentage} ->
+        "| #{model_name} | #{percentage}% |"
+      end)
+
+    table = Enum.join([header, separator | rows], "\n")
+
+    "#{test_title}\n\n#{table}"
   end
 
   @spec calculate_average_score(list()) :: float()

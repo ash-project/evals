@@ -9,10 +9,10 @@ defmodule Evals.FormatterTest do
       opts = %Options{iterations: 1, usage_rules: false}
 
       results = %{
-        {"model1", "category1", "test1", false} => 0.8,
-        {"model1", "category1", "test2", false} => 0.6,
-        {"model2", "category1", "test1", false} => 0.9,
-        {"model2", "category2", "test3", false} => 0.7
+        {"model1", "category1", "test1", "default", false} => 0.8,
+        {"model1", "category1", "test2", "default", false} => 0.6,
+        {"model2", "category1", "test1", "default", false} => 0.9,
+        {"model2", "category2", "test3", "default", false} => 0.7
       }
 
       %{opts: opts, results: results}
@@ -22,11 +22,11 @@ defmodule Evals.FormatterTest do
       report = Formatter.format_report(results, opts)
 
       assert String.contains?(report, "EVALUATION REPORT")
-      assert String.contains?(report, "OVERALL SUMMARY")
-      assert String.contains?(report, "DETAILED RESULTS")
-      assert String.contains?(report, "Iterations: 1")
-      assert String.contains?(report, "CATEGORY1:")
-      assert String.contains?(report, "CATEGORY2:")
+      assert String.contains?(report, "Overall Summary")
+      assert String.contains?(report, "Detailed Results")
+      assert String.contains?(report, "**Iterations:** 1")
+      assert String.contains?(report, "CATEGORY1")
+      assert String.contains?(report, "CATEGORY2")
     end
 
     test "formats report with custom title", %{opts: opts, results: results} do
@@ -39,8 +39,8 @@ defmodule Evals.FormatterTest do
     test "formats summary report when format is :summary", %{opts: opts, results: results} do
       report = Formatter.format_report(results, opts, format: :summary)
 
-      assert String.contains?(report, "OVERALL SUMMARY")
-      refute String.contains?(report, "DETAILED RESULTS")
+      assert String.contains?(report, "Overall Summary")
+      refute String.contains?(report, "Detailed Results")
     end
 
     test "includes model averages in summary", %{opts: opts, results: results} do
@@ -58,9 +58,9 @@ defmodule Evals.FormatterTest do
     test "formats detailed results with test breakdowns", %{opts: opts, results: results} do
       report = Formatter.format_report(results, opts, format: :full)
 
-      assert String.contains?(report, "test1:")
-      assert String.contains?(report, "test2:")
-      assert String.contains?(report, "test3:")
+      assert String.contains?(report, "test1")
+      assert String.contains?(report, "test2")
+      assert String.contains?(report, "test3")
 
       # Check individual test scores are present
       # model1, test1
@@ -79,10 +79,10 @@ defmodule Evals.FormatterTest do
       opts = %Options{iterations: 1, usage_rules: :compare}
 
       results = %{
-        {"model1", "category1", "test1", true} => 0.8,
-        {"model1", "category1", "test1", false} => 0.6,
-        {"model2", "category1", "test1", true} => 0.9,
-        {"model2", "category1", "test1", false} => 0.7
+        {"model1", "category1", "test1", "default", true} => 0.8,
+        {"model1", "category1", "test1", "default", false} => 0.6,
+        {"model2", "category1", "test1", "default", true} => 0.9,
+        {"model2", "category1", "test1", "default", false} => 0.7
       }
 
       %{opts: opts, results: results}
@@ -91,15 +91,15 @@ defmodule Evals.FormatterTest do
     test "formats usage rules comparison in summary", %{opts: opts, results: results} do
       report = Formatter.format_report(results, opts)
 
-      assert String.contains?(report, "With usage rules:")
-      assert String.contains?(report, "Without usage rules:")
+      assert String.contains?(report, "With Usage Rules")
+      assert String.contains?(report, "Without Usage Rules")
 
       # Check that models appear in both sections
       lines = String.split(report, "\n")
-      with_rules_section = Enum.find_index(lines, &String.contains?(&1, "With usage rules:"))
+      with_rules_section = Enum.find_index(lines, &String.contains?(&1, "With Usage Rules"))
 
       without_rules_section =
-        Enum.find_index(lines, &String.contains?(&1, "Without usage rules:"))
+        Enum.find_index(lines, &String.contains?(&1, "Without Usage Rules"))
 
       assert with_rules_section < without_rules_section
     end
@@ -118,12 +118,12 @@ defmodule Evals.FormatterTest do
       report = Formatter.format_report(%{}, opts)
 
       assert String.contains?(report, "EVALUATION REPORT")
-      assert String.contains?(report, "OVERALL SUMMARY")
+      assert String.contains?(report, "Overall Summary")
     end
 
     test "handles single model result" do
       opts = %Options{iterations: 1, usage_rules: false}
-      results = %{{"solo-model", "test", "single", false} => 1.0}
+      results = %{{"solo-model", "test", "single", "default", false} => 1.0}
 
       report = Formatter.format_report(results, opts)
 

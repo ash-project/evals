@@ -1,116 +1,204 @@
 # Flagship Models
-Iterations: 5
----
 
-OVERALL SUMMARY:
----
+**Iterations:** 5
 
-With usage rules:
-  claude sonnet 4    | 100.0%
-  gemini-2.5-pro     | 97.5%
-  gpt-4.1            | 95.0%
+## Overall Summary
 
-Without usage rules:
-  claude sonnet 4    | 77.8%
-  gpt-4.1            | 77.8%
-  gemini-2.5-pro     | 68.9%
+### With Usage Rules
 
-CATEGORY SUMMARIES:
---------------------------------------------------------------------------------
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gpt-4.1 | 95.0% |
+| gemini-2.5-pro | 90.0% |
 
-ASH - With usage rules:
-  claude sonnet 4    | 100.0%
-  gemini-2.5-pro     | 100.0%
-  gpt-4.1            | 100.0%
+### Without Usage Rules
 
-ASH - Without usage rules:
-  claude sonnet 4    | 0.0%
-  gemini-2.5-pro     | 0.0%
-  gpt-4.1            | 0.0%
+| Model | Score |
+|-------|-------|
+| gpt-4.1 | 80.0% |
+| claude sonnet 4 | 77.8% |
+| gemini-2.5-pro | 66.7% |
 
-ELIXIR - With usage rules:
-  claude sonnet 4    | 100.0%
-  gemini-2.5-pro     | 97.1%
-  gpt-4.1            | 94.3%
 
-ELIXIR - Without usage rules:
-  claude sonnet 4    | 87.5%
-  gpt-4.1            | 87.5%
-  gemini-2.5-pro     | 77.5%
+## Category Summaries
 
-DETAILED RESULTS:
---------------------------------------------------------------------------------
+### ASH
 
-ASH:
-  require-ash-query - correctness (no usage rules):
-    claude sonnet 4      | 0.0%
-    gemini-2.5-pro       | 0.0%
-    gpt-4.1              | 0.0%
-  require-ash-query - correctness (with usage rules):
-    claude sonnet 4      | 100.0%
-    gemini-2.5-pro       | 100.0%
-    gpt-4.1              | 100.0%
+**With Usage Rules:**
 
-ELIXIR:
-  balanced-binary-tree - balanced_tree (no usage rules):
-    claude sonnet 4      | 100.0%
-    gemini-2.5-pro       | 100.0%
-    gpt-4.1              | 100.0%
-  balanced-binary-tree - balanced_tree (with usage rules):
-    claude sonnet 4      | 100.0%
-    gemini-2.5-pro       | 100.0%
-    gpt-4.1              | 100.0%
-  balanced-binary-tree - empty_tree (no usage rules):
-    claude sonnet 4      | 100.0%
-    gemini-2.5-pro       | 100.0%
-    gpt-4.1              | 100.0%
-  balanced-binary-tree - empty_tree (with usage rules):
-    claude sonnet 4      | 100.0%
-    gemini-2.5-pro       | 100.0%
-    gpt-4.1              | 100.0%
-  balanced-binary-tree - single_node (no usage rules):
-    claude sonnet 4      | 100.0%
-    gemini-2.5-pro       | 100.0%
-    gpt-4.1              | 100.0%
-  balanced-binary-tree - single_node (with usage rules):
-    claude sonnet 4      | 100.0%
-    gemini-2.5-pro       | 100.0%
-    gpt-4.1              | 100.0%
-  balanced-binary-tree - unbalanced_tree (no usage rules):
-    claude sonnet 4      | 100.0%
-    gemini-2.5-pro       | 100.0%
-    gpt-4.1              | 100.0%
-  balanced-binary-tree - unbalanced_tree (with usage rules):
-    claude sonnet 4      | 100.0%
-    gemini-2.5-pro       | 100.0%
-    gpt-4.1              | 100.0%
-  parallel-map - correctness (no usage rules):
-    claude sonnet 4      | 100.0%
-    gemini-2.5-pro       | 100.0%
-    gpt-4.1              | 100.0%
-  parallel-map - correctness (with usage rules):
-    claude sonnet 4      | 100.0%
-    gemini-2.5-pro       | 100.0%
-    gpt-4.1              | 100.0%
-  parallel-map - idiomatic (no usage rules):
-    claude sonnet 4      | 0.0%
-    gemini-2.5-pro       | 20.0%
-    gpt-4.1              | 0.0%
-  parallel-map - idiomatic (with usage rules):
-    claude sonnet 4      | 100.0%
-    gemini-2.5-pro       | 80.0%
-    gpt-4.1              | 60.0%
-  parallel-map - performance (no usage rules):
-    claude sonnet 4      | 100.0%
-    gemini-2.5-pro       | 100.0%
-    gpt-4.1              | 100.0%
-  parallel-map - performance (with usage rules):
-    claude sonnet 4      | 100.0%
-    gemini-2.5-pro       | 100.0%
-    gpt-4.1              | 100.0%
-  simple-addition - basic_addition (no usage rules):
-    claude sonnet 4      | 100.0%
-    gemini-2.5-pro       | 0.0%
-    gpt-4.1              | 100.0%
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gpt-4.1 | 100.0% |
+| gemini-2.5-pro | 60.0% |
 
----
+**Without Usage Rules:**
+
+| Model | Score |
+|-------|-------|
+| gpt-4.1 | 20.0% |
+| claude sonnet 4 | 0.0% |
+| gemini-2.5-pro | 0.0% |
+
+
+### ELIXIR
+
+**With Usage Rules:**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gemini-2.5-pro | 94.3% |
+| gpt-4.1 | 94.3% |
+
+**Without Usage Rules:**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 87.5% |
+| gpt-4.1 | 87.5% |
+| gemini-2.5-pro | 75.0% |
+
+
+## Detailed Results
+
+### ASH
+
+**require-ash-query - correctness (no usage rules)**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 0.0% |
+| gemini-2.5-pro | 0.0% |
+| gpt-4.1 | 20.0% |
+
+**require-ash-query - correctness (with usage rules)**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gemini-2.5-pro | 60.0% |
+| gpt-4.1 | 100.0% |
+
+### ELIXIR
+
+**balanced-binary-tree - balanced_tree (no usage rules)**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gemini-2.5-pro | 100.0% |
+| gpt-4.1 | 100.0% |
+
+**balanced-binary-tree - balanced_tree (with usage rules)**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gemini-2.5-pro | 100.0% |
+| gpt-4.1 | 100.0% |
+
+**balanced-binary-tree - empty_tree (no usage rules)**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gemini-2.5-pro | 100.0% |
+| gpt-4.1 | 100.0% |
+
+**balanced-binary-tree - empty_tree (with usage rules)**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gemini-2.5-pro | 100.0% |
+| gpt-4.1 | 100.0% |
+
+**balanced-binary-tree - single_node (no usage rules)**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gemini-2.5-pro | 100.0% |
+| gpt-4.1 | 100.0% |
+
+**balanced-binary-tree - single_node (with usage rules)**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gemini-2.5-pro | 100.0% |
+| gpt-4.1 | 100.0% |
+
+**balanced-binary-tree - unbalanced_tree (no usage rules)**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gemini-2.5-pro | 100.0% |
+| gpt-4.1 | 100.0% |
+
+**balanced-binary-tree - unbalanced_tree (with usage rules)**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gemini-2.5-pro | 100.0% |
+| gpt-4.1 | 100.0% |
+
+**parallel-map - correctness (no usage rules)**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gemini-2.5-pro | 100.0% |
+| gpt-4.1 | 100.0% |
+
+**parallel-map - correctness (with usage rules)**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gemini-2.5-pro | 100.0% |
+| gpt-4.1 | 100.0% |
+
+**parallel-map - idiomatic (no usage rules)**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 0.0% |
+| gemini-2.5-pro | 0.0% |
+| gpt-4.1 | 0.0% |
+
+**parallel-map - idiomatic (with usage rules)**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gemini-2.5-pro | 60.0% |
+| gpt-4.1 | 60.0% |
+
+**parallel-map - performance (no usage rules)**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gemini-2.5-pro | 100.0% |
+| gpt-4.1 | 100.0% |
+
+**parallel-map - performance (with usage rules)**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gemini-2.5-pro | 100.0% |
+| gpt-4.1 | 100.0% |
+
+**simple-addition - basic_addition (no usage rules)**
+
+| Model | Score |
+|-------|-------|
+| claude sonnet 4 | 100.0% |
+| gemini-2.5-pro | 0.0% |
+| gpt-4.1 | 100.0% |
