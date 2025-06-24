@@ -1,4 +1,7 @@
 defmodule Evals.Common do
+  @moduledoc """
+  Module for common evaluation sets
+  """
   def flagship(opts \\ []) do
     Evals.report(
       [

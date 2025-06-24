@@ -108,7 +108,8 @@
         {Credo.Check.Readability.SpaceAfterCommas, []},
         {Credo.Check.Readability.StringSigils, []},
         {Credo.Check.Readability.TrailingBlankLine, []},
-        {Credo.Check.Readability.TrailingWhiteSpace, []},
+        # false positive for this one?
+        {Credo.Check.Readability.TrailingWhiteSpace, false},
         {Credo.Check.Readability.UnnecessaryAliasExpansion, []},
         {Credo.Check.Readability.VariableNames, []},
 

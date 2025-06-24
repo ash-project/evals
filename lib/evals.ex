@@ -1,8 +1,12 @@
 defmodule Evals do
+  @moduledoc """
+  Module for evaluating models using LangChain.
+  """
   alias LangChain.Chains.LLMChain
   alias LangChain.Message
 
   defmodule Options do
+    @moduledoc false
     use Spark.Options.Validator,
       schema: [
         system_prompt: [
@@ -170,7 +174,7 @@ defmodule Evals do
 
     system_prompt =
       if eval[:usage_rules] && eval[:install] do
-        packages = eval[:install] |> Enum.map(& &1[:package]) |> Enum.join(", ")
+        packages = eval[:install] |> Enum.map_join(", ", & &1[:package])
 
         script =
           """
@@ -403,7 +407,7 @@ defmodule Evals do
   defp format_message(%LangChain.Message{role: role, content: content}) do
     """
     #{role}:
-    #{content |> String.split("\n") |> Enum.map(&"  #{&1}") |> Enum.join("\n")}
+    #{content |> String.split("\n") |> Enum.map_join("\n", &"  #{&1}")}
     """
   end
 end
