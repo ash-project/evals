@@ -11,6 +11,11 @@ A comprehensive evaluation framework for testing and comparing AI language model
 - **Rich Reporting**: Generate summary or detailed reports with performance breakdowns
 - **YAML-Based Test Definitions**: Define evaluations in simple YAML files organized by category
 
+## Roadmap
+
+- Different types of evals, like `response_contains`,  `response_doesnt_contain`, and also `llm_judge` where you ask a separate judge LLM if a certain property is attained by the output.
+- The ability to experiment with different system prompts, i.e does "you are an expert Elixir developer" matter?
+
 ## Quick Start
 
 ```elixir
