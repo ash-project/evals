@@ -21,7 +21,7 @@ defmodule Mix.Tasks.Evals.Report do
     * `--only` - Only evaluate specific file path/pattern (e.g. "evals/elixir/**/*.yml")
     * `--system-prompt` - Override the system prompt for the evaluation
     * `--debug` - Enable debug mode
-    * `--usage-rules` - How to evaluate usage rules: true, false, or compare
+    * `--usage-rules` - How to evaluate usage rules: true, false, or compare, defaults to compare
     * `--iterations` - Number of iterations to run (default: 1)
     * `--title` - Custom title for the report
     * `--format` - Report format: summary or full (default: full)
@@ -112,7 +112,7 @@ defmodule Mix.Tasks.Evals.Report do
         Keyword.put(opts, :usage_rules, :compare)
 
       nil ->
-        opts
+        Keyword.put(opts, :usage_rules, :compare)
 
       other ->
         Mix.raise("Invalid --usage-rules value: #{other}. Expected: true, false, or compare")
