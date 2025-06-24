@@ -16,6 +16,7 @@ A evaluation tool for testing and comparing AI language models on various coding
 - For `write_code_and_assert` type, more complex setup tasks where the LLM only needs to generate a subset of a response, not all the code.
 - Different types of evals, like `response_contains`,  `response_doesnt_contain`, and also `llm_judge` where you ask a separate judge LLM if a certain property is attained by the output.
 - The ability to experiment with different system prompts, i.e does "you are an expert Elixir developer" matter?
+- The ability to benchmark fully agentic flows like multi-turn working with hex docs search, plan files, custom context etc.
 
 ## Quick Start
 
