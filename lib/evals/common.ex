@@ -20,7 +20,7 @@ defmodule Evals.Common do
 
   Returns evaluation results for GPT-4.1, GPT-4o, Claude Sonnet 4, and Claude Sonnet 3.7.
   """
-  @spec flagship(keyword()) :: map()
+  @spec flagship(keyword()) :: String.t()
   def flagship(opts \\ []) do
     Evals.report(
       [
@@ -41,7 +41,7 @@ defmodule Evals.Common do
 
   Returns evaluation results for GPT-4.1 and GPT-4o.
   """
-  @spec gpt(keyword()) :: map()
+  @spec gpt(keyword()) :: String.t()
   def gpt(opts \\ []) do
     Evals.report(
       [
@@ -67,7 +67,7 @@ defmodule Evals.Common do
       Evals.Common.gemini(only: "evals/elixir_core/*.yml")
 
   """
-  @spec gemini(keyword()) :: map()
+  @spec gemini(keyword()) :: String.t()
   def gemini(opts \\ []) do
     Evals.report(
       [

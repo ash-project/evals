@@ -482,7 +482,7 @@ defmodule Evals do
 
     """
     #{role}:
-    #{content_text |> String.split("\n") |> Enum.map(&"  #{&1}") |> Enum.join("\n")}
+    #{String.split(content_text, "\n") |> Enum.map_join("\n", &"  #{&1}")}
     """
   end
 end
