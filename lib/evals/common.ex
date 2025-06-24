@@ -33,7 +33,7 @@ defmodule Evals.Common do
       ],
       Keyword.put(opts, :title, "Flagship Models")
     )
-    |> elem(0)
+    |> elem(1)
   end
 
   @doc """
@@ -50,7 +50,7 @@ defmodule Evals.Common do
       ],
       Keyword.put(opts, :title, "GPTs")
     )
-    |> elem(0)
+    |> elem(1)
   end
 
   @doc """
@@ -76,6 +76,6 @@ defmodule Evals.Common do
       ],
       Keyword.put(opts, :title, "Gemini Models")
     )
-    |> elem(0)
+    |> elem(1)
   end
 end
