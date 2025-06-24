@@ -1,8 +1,22 @@
 defmodule Evals do
+  @moduledoc """
+  The core evaluation engine for the Elixir LLM Evals framework.
+
+  This module is responsible for:
+  - Discovering and parsing evaluation files (`.yml`).
+  - Preparing and executing evaluation jobs in parallel against multiple LLMs.
+  - Sandboxing the execution of model-generated code.
+  - Grading the results based on the eval's criteria.
+  - Aggregating results for reporting.
+  """
+
   alias LangChain.Chains.LLMChain
   alias LangChain.Message
 
   defmodule Options do
+    @moduledoc """
+    Defines and validates the options for an evaluation run.
+    """
     use Spark.Options.Validator,
       schema: [
         system_prompt: [
@@ -32,6 +46,23 @@ defmodule Evals do
       ]
   end
 
+  @doc """
+  Runs a full evaluation and returns a formatted report.
+
+  This is the main entry point for running an evaluation suite. It orchestrates
+  the evaluation of models and then formats the results into a human-readable string.
+
+  ## Parameters
+  - `models`: A keyword list or map of model names to `LangChain.ChatModels` instances.
+  - `opts`: A keyword list of options. See `Evals.Options` for evaluation options
+    and `Evals.Formatter` for report options like `:title` and `:format`.
+
+  ## Returns
+  A tuple `{results, report_text}` where:
+  - `results`: A map containing the raw aggregated scores.
+  - `report_text`: A formatted string report.
+  """
+  @spec report(models :: keyword() | map(), opts :: keyword()) :: {map(), String.t()}
   def report(models, opts \\ []) do
     {report_opts, eval_opts} = Keyword.split(opts, [:title, :format])
     opts = %Options{} = Options.validate!(eval_opts)
@@ -40,6 +71,18 @@ defmodule Evals do
     {results, report_text}
   end
 
+  @doc """
+  Runs the evaluation logic and returns the raw results.
+
+  ## Parameters
+  - `models`: A keyword list or map of model names to `LangChain.ChatModels` instances.
+  - `opts`: A keyword list of options. See `Evals.Options` for available options.
+
+  ## Returns
+  A map where keys are tuples of `{model_name, category, name, usage_rules}` and
+  values are the average scores across all iterations.
+  """
+  @spec evaluate(models :: keyword() | map(), opts :: keyword()) :: map()
   def evaluate(models, opts \\ []) do
     tmp_dir = Path.join("tmp", to_string(System.unique_integer([:positive])))
     File.mkdir_p!(tmp_dir)
@@ -60,49 +103,12 @@ defmodule Evals do
         Stream.duplicate(eval, opts.iterations)
       end)
       |> Task.async_stream(
-        fn eval ->
-          messages = messages(eval, tmp_dir, opts)
-          result = result(eval, messages)
-          {grade, error, graded_on} = grade(eval, result, tmp_dir)
-
-          if eval[:debug] || opts.debug do
-            IO.puts("""
-            === DEBUG ===
-            model_name: #{eval.model_name}
-            category: #{eval.category}
-            name: #{eval.name}
-            usage_rules: #{eval.usage_rules}
-            -------------
-            Messages:
-            #{Enum.map_join(messages, "\n", &format_message/1)}
-            -------------
-            Result:
-
-            #{Enum.map_join(String.split(result, "\n"), "\n", &"  #{&1}")}
-            -------------
-            Graded on:
-
-            #{Enum.map_join(String.split(graded_on, "\n"), "\n", &"  #{&1}")}
-            #{if error, do: error}
-            =============
-            """)
-          end
-
-          Map.take(eval, [:model_name, :category, :name, :usage_rules])
-          |> Map.put(:grade, grade)
-        end,
+        &run_single_eval(&1, tmp_dir, opts),
         timeout: :infinity
       )
-      |> Enum.reduce(%{}, fn {:ok,
-                              %{
-                                model_name: model_name,
-                                name: name,
-                                category: category,
-                                usage_rules: usage_rules,
-                                grade: grade
-                              }},
-                             acc ->
-        Map.update(acc, {model_name, category, name, usage_rules}, [grade], &[grade | &1])
+      |> Enum.reduce(%{}, fn {:ok, result}, acc ->
+        key = {result.model_name, result.category, result.name, result.usage_rules}
+        Map.update(acc, key, [result.grade], &[result.grade | &1])
       end)
       |> Map.new(fn {key, value} -> {key, Enum.sum(value) / Enum.count(value)} end)
     after
@@ -110,6 +116,123 @@ defmodule Evals do
     end
   end
 
+  # --- Private Helper Functions ---
+
+  @spec run_single_eval(eval :: map(), tmp_dir :: String.t(), opts :: struct()) :: map()
+  defp run_single_eval(eval, tmp_dir, opts) do
+    messages = messages(eval, tmp_dir, opts)
+    result = result(eval, messages)
+    {grade, error, graded_on} = grade(eval, result, tmp_dir)
+
+    if eval[:debug] || opts.debug do
+      IO.puts("""
+      === DEBUG ===
+      model_name: #{eval.model_name}, category: #{eval.category}, name: #{eval.name}, usage_rules: #{eval.usage_rules}
+      -------------
+      Messages:
+      #{Enum.map_join(messages, "\n", &format_message/1)}
+      -------------
+      Result:
+
+      #{Enum.map_join(String.split(result, "\n"), "\n", &"  #{&1}")}
+      -------------
+      Graded on:
+
+      #{Enum.map_join(String.split(graded_on, "\n"), "\n", &"  #{&1}")}
+      #{if error, do: error}
+      =============
+      """)
+    end
+
+    %{
+      model_name: eval.model_name,
+      category: eval.category,
+      name: eval.name,
+      usage_rules: eval.usage_rules,
+      grade: grade
+    }
+  end
+
+  @spec grade(eval :: map(), result :: String.t(), tmp_dir :: String.t()) ::
+          {0 | 1, String.t() | nil, String.t()}
+  defp grade(%{type: :write_code_and_assert, eval: %{assert: assert}} = eval, result, tmp_dir) do
+    {code, assigns} =
+      if assert[:wrap_in_module] == true do
+        mod = "Generated#{System.unique_integer([:positive])}"
+        {"defmodule #{mod} do\n#{result}\nend", %{module_name: mod}}
+      else
+        {result, %{}}
+      end
+
+    {code_with_assertion, graded_on} =
+      cond do
+        script = assert[:script] ->
+          script_text = EEx.eval_string(script, assigns: assigns)
+
+          full_code =
+            "#{code}\nrequire ExUnit.Assertions\nimport ExUnit.Assertions\n#{script_text}"
+
+          {full_code, script_text}
+
+        assertion = assert[:assertion] ->
+          assertion_text = EEx.eval_string(assertion, assigns: assigns)
+
+          full_code =
+            "#{code}\nrequire ExUnit.Assertions\nExUnit.Assertions.assert #{assertion_text}"
+
+          {full_code, assertion_text}
+
+        true ->
+          raise "Eval assert must contain either an 'assertion' or a 'script' key."
+      end
+
+    case write_and_eval(eval, tmp_dir, code_with_assertion) do
+      {_result, 0} -> {1, nil, graded_on}
+      {result, _} -> {0, result, graded_on}
+    end
+  end
+
+  @spec from_yml(map()) :: map()
+  defp from_yml(data) do
+    data
+    |> remap_key("id", :id)
+    |> remap_key("description", :description)
+    |> remap_key("difficulty", :difficulty, &String.to_atom/1)
+    |> remap_key("tags", :tags)
+    |> remap_key("type", :type, &String.to_atom/1)
+    |> remap_key("code", :code)
+    |> remap_key("debug", :debug)
+    |> remap_key(
+      "install",
+      :install,
+      &Enum.map(&1, fn install ->
+        install
+        |> remap_key("package", :package)
+        |> remap_key("version", :version)
+      end)
+    )
+    |> remap_key(
+      "messages",
+      :messages,
+      &Enum.map(&1, fn message ->
+        message
+        |> remap_key("type", :type)
+        |> remap_key("text", :text)
+      end)
+    )
+    |> remap_key("eval", :eval, fn eval ->
+      eval
+      |> remap_key("assert", :assert, fn assert ->
+        assert
+        |> remap_key("wrap_in_module", :wrap_in_module)
+        |> remap_key("assertion", :assertion)
+        |> remap_key("script", :script)
+      end)
+    end)
+    |> Map.put(:usage_rules, false)
+  end
+
+  # ... existing code ...
   defp set_usage_rules(stream, opts) do
     case opts.usage_rules do
       true ->
@@ -129,37 +252,6 @@ defmodule Evals do
             end
           end
         )
-    end
-  end
-
-  defp grade(%{type: :write_code_and_assert, eval: %{assert: assert}} = eval, result, tmp_dir) do
-    {code, assigns} =
-      if assert[:wrap_in_module] == true do
-        mod =
-          "Generated#{System.unique_integer([:positive])}"
-
-        {"defmodule #{mod} do\n#{result}\nend", %{module_name: mod}}
-      else
-        {result, %{}}
-      end
-
-    assertion =
-      EEx.eval_string(assert[:assertion], assigns: assigns)
-
-    code_with_assertion =
-      """
-      #{code}
-      require ExUnit.Assertions
-      ExUnit.Assertions.assert #{assertion}
-      """
-
-    case write_and_eval(
-           eval,
-           tmp_dir,
-           code_with_assertion
-         ) do
-      {_result, 0} -> {1, nil, assertion}
-      {result, _} -> {0, result, assertion}
     end
   end
 
@@ -303,12 +395,23 @@ defmodule Evals do
       |> LLMChain.add_messages(messages)
       |> LLMChain.run(mode: :until_success)
 
-    case content do
+    # Handle both string content and ContentPart list formats
+    content_text =
+      case content do
+        # New format: list of ContentPart structs
+        [%{content: text} | _] when is_binary(text) -> text
+        # Legacy format: direct string
+        text when is_binary(text) -> text
+        # Fallback: convert to string if possible
+        other -> to_string(other)
+      end
+
+    case content_text do
       "```elixir\n" <> rest ->
         rest |> String.split("\n```") |> List.first()
 
-      content ->
-        content
+      content_text ->
+        content_text
     end
   rescue
     e ->
@@ -323,8 +426,10 @@ defmodule Evals do
     if opts.only do
       Path.wildcard(opts.only)
     else
-      Path.wildcard("evals/*/*")
+      Path.wildcard("evals/**/*.yml")
     end
+    # Only process regular files, not directories
+    |> Enum.filter(&File.regular?/1)
     |> Enum.map(fn file ->
       [_, category | _] = Path.split(file)
 
@@ -363,47 +468,21 @@ defmodule Evals do
     end
   end
 
-  def from_yml(data) do
-    data
-    |> remap_key("type", :type, &String.to_atom/1)
-    |> remap_key("code", :code)
-    |> remap_key("debug", :debug)
-    |> remap_key(
-      "install",
-      :install,
-      &Enum.map(&1, fn install ->
-        install
-        |> remap_key("package", :package)
-        |> remap_key("version", :version)
-      end)
-    )
-    |> remap_key(
-      "messages",
-      :messages,
-      &Enum.map(&1, fn message ->
-        message
-        |> remap_key("type", :type)
-        |> remap_key("text", :text)
-      end)
-    )
-    |> remap_key("eval", :eval, fn eval ->
-      eval
-      |> remap_key("assert", :assert, fn assert ->
-        assert
-        |> remap_key("wrap_in_module", :wrap_in_module)
-        |> remap_key(
-          "assertion",
-          :assertion
-        )
-      end)
-    end)
-    |> Map.put(:usage_rules, false)
-  end
-
   defp format_message(%LangChain.Message{role: role, content: content}) do
+    # Handle both string content and ContentPart list formats
+    content_text =
+      case content do
+        # New format: list of ContentPart structs
+        [%{content: text} | _] when is_binary(text) -> text
+        # Legacy format: direct string
+        text when is_binary(text) -> text
+        # Fallback: convert to string if possible
+        other -> inspect(other)
+      end
+
     """
     #{role}:
-    #{content |> String.split("\n") |> Enum.map(&"  #{&1}") |> Enum.join("\n")}
+    #{content_text |> String.split("\n") |> Enum.map(&"  #{&1}") |> Enum.join("\n")}
     """
   end
 end

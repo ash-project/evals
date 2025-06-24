@@ -6,16 +6,31 @@ defmodule Evals.Formatter do
   @doc """
   Formats evaluation results into a report string.
 
+  Takes raw evaluation results and formats them into a report with summaries
+  and detailed breakdowns by category and test.
+
+  ## Parameters
+
+  - `results` - A map of evaluation results where keys are tuples of
+    `{model_name, category, name, usage_rules}` and values are scores
+  - `opts` - The validated options struct from `Evals.Options`
+  - `report_opts` - A keyword list of report formatting options
+
   ## Options
 
   * `:title` - Custom title for the report (default: "EVALUATION REPORT")
   * `:format` - Format type, either :summary or :full (default: :full)
+
+  ## Returns
+
+  A formatted report string.
 
   ## Examples
 
       iex> Evals.Formatter.format_report(results, opts, title: "My Report", format: :summary)
       "EVALUATION REPORT\\n..."
   """
+  @spec format_report(map(), Evals.Options.t(), keyword()) :: String.t()
   def format_report(results, opts, report_opts \\ []) do
     lines = []
 
@@ -47,6 +62,7 @@ defmodule Evals.Formatter do
     Enum.join(lines, "\n")
   end
 
+  @spec format_model_summary(map(), Evals.Options.t()) :: [String.t()]
   defp format_model_summary(results, opts) do
     if opts.usage_rules == :compare do
       format_usage_rules_comparison(results)
@@ -55,6 +71,7 @@ defmodule Evals.Formatter do
     end
   end
 
+  @spec format_usage_rules_comparison(map()) :: [String.t()]
   defp format_usage_rules_comparison(results) do
     # Break down by usage rules when comparing
     results_by_model_and_rules =
@@ -96,6 +113,7 @@ defmodule Evals.Formatter do
     with_rules_lines ++ without_rules_lines
   end
 
+  @spec format_simple_model_averages(map()) :: [String.t()]
   defp format_simple_model_averages(results) do
     # Group results by model for better organization
     results_by_model =
@@ -114,6 +132,7 @@ defmodule Evals.Formatter do
     end)
   end
 
+  @spec format_detailed_results(map(), Evals.Options.t()) :: [String.t()]
   defp format_detailed_results(results, opts) do
     lines = ["\nDETAILED RESULTS:"]
     lines = lines ++ [String.duplicate("-", 80)]
@@ -132,6 +151,7 @@ defmodule Evals.Formatter do
     lines ++ category_lines
   end
 
+  @spec format_category_results(map(), String.t(), Evals.Options.t()) :: [String.t()]
   defp format_category_results(results, category, opts) do
     category_results =
       results
@@ -146,6 +166,7 @@ defmodule Evals.Formatter do
     ["\n#{String.upcase(category)}:"] ++ test_lines
   end
 
+  @spec format_test_results(String.t(), boolean(), list(), Evals.Options.t()) :: [String.t()]
   defp format_test_results(name, usage_rules, test_results, opts) do
     usage_suffix = if usage_rules, do: " (with usage rules)", else: " (no usage rules)"
 
@@ -167,6 +188,7 @@ defmodule Evals.Formatter do
     [test_header] ++ result_lines
   end
 
+  @spec calculate_average_score(list()) :: float()
   defp calculate_average_score(model_results) do
     model_results
     |> Enum.map(fn {_, score} -> score end)
