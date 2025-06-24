@@ -25,13 +25,39 @@ defmodule Evals.Common do
     Evals.report(
       [
         "gpt-4.1": LangChain.ChatModels.ChatOpenAI.new!(%{model: "gpt-4.1"}),
-        "gpt-4o": LangChain.ChatModels.ChatOpenAI.new!(%{model: "gpt-4o"}),
+        "claude sonnet 4":
+          LangChain.ChatModels.ChatAnthropic.new!(%{model: "claude-sonnet-4-20250514"}),
+        "gemini-2.5-flash": LangChain.ChatModels.ChatGoogleAI.new!(%{model: "gemini-2.5-flash"})
+      ],
+      Keyword.put(opts, :title, "Flagship Models")
+    )
+    |> elem(1)
+  end
+
+  @doc """
+  Runs evaluations against Anthropic Claude models.
+
+  Returns evaluation results for Claude Sonnet 4 and Claude Sonnet 3.7.
+
+  ## Example
+
+      # Run against all evaluations
+      Evals.Common.anthropic()
+
+      # Run with custom options
+      Evals.Common.anthropic(only: "evals/elixir/**/*.yml")
+
+  """
+  @spec anthropic(keyword()) :: String.t()
+  def anthropic(opts \\ []) do
+    Evals.report(
+      [
         "claude sonnet 4":
           LangChain.ChatModels.ChatAnthropic.new!(%{model: "claude-sonnet-4-20250514"}),
         "claude sonnet 3.7":
           LangChain.ChatModels.ChatAnthropic.new!(%{model: "claude-3-7-sonnet-latest"})
       ],
-      Keyword.put(opts, :title, "Flagship Models")
+      Keyword.put(opts, :title, "Anthropic Models")
     )
     |> elem(1)
   end

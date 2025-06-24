@@ -37,15 +37,14 @@ defmodule Evals.Formatter do
   def format_report(results, opts, report_opts \\ []) do
     lines = []
 
-    lines = lines ++ ["\n" <> String.duplicate("=", 80)]
     title = Keyword.get(report_opts, :title, "EVALUATION REPORT")
-    lines = lines ++ [title]
+    lines = lines ++ ["# " <> title]
     lines = lines ++ ["Iterations: #{opts.iterations}"]
-    lines = lines ++ [String.duplicate("=", 80)]
+    lines = lines ++ ["---"]
 
     # Overall summary
     lines = lines ++ ["\nOVERALL SUMMARY:"]
-    lines = lines ++ [String.duplicate("-", 40)]
+    lines = lines ++ ["---"]
 
     model_summary_lines = format_model_summary(results, opts)
     lines = lines ++ model_summary_lines
@@ -55,11 +54,11 @@ defmodule Evals.Formatter do
     lines =
       case format do
         :summary ->
-          lines ++ ["\n" <> String.duplicate("=", 80)]
+          lines ++ ["\n---"]
 
         :full ->
           detailed_lines = format_detailed_results(results, opts)
-          lines ++ detailed_lines ++ ["\n" <> String.duplicate("=", 80)]
+          lines ++ detailed_lines ++ ["\n---"]
       end
 
     Enum.join(lines, "\n")

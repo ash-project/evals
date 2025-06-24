@@ -8,15 +8,14 @@ defmodule Evals.CommonTest do
     test "returns formatted report for flagship models" do
       with_mock Evals, [:passthrough],
         report: fn models, opts ->
-          assert length(models) == 4
+          assert length(models) == 3
           assert Keyword.get(opts, :title) == "Flagship Models"
 
           # Check that all expected models are present
           model_names = Keyword.keys(models)
           assert :"gpt-4.1" in model_names
-          assert :"gpt-4o" in model_names
           assert :"claude sonnet 4" in model_names
-          assert :"claude sonnet 3.7" in model_names
+          assert :"gemini-2.5-flash" in model_names
 
           {%{}, "Flagship Models Report"}
         end do
