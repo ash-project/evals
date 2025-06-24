@@ -1,0 +1,20 @@
+id: elixir.core.pattern_matching.function_heads.v1
+description: "Tests the ability to use pattern matching in function heads to handle different data shapes."
+difficulty: easy
+tags: [elixir-core, pattern-matching]
+type: write_code_and_assert
+messages:
+  - type: user
+    text: |
+      Write a function `handle_data/1` with multiple clauses.
+      - If the input is the atom `:ok`, it should return the string "Success".
+      - If the input is a tuple `{:error, reason}`, it should return the string "Failure: #{reason}".
+      - If the input is anything else, it should return the string "Unknown data".
+      Return just the function definitions.
+eval:
+  assert:
+    wrap_in_module: true
+    assertion: |
+      assert <%= @module_name %>.handle_data(:ok) == "Success" and
+      assert <%= @module_name %>.handle_data({:error, "timeout"}) == "Failure: timeout" and
+      assert <%= @module_name %>.handle_data([1, 2, 3]) == "Unknown data"

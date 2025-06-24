@@ -1,0 +1,22 @@
+id: elixir.core.std_lib.stream_lazy_processing.v1
+description: "Tests understanding of lazy processing with Stream for potentially large collections."
+difficulty: medium
+tags: [elixir-core, std-lib, stream, performance]
+type: write_code_and_assert
+messages:
+  - type: user
+    text: |
+      Write a function `process_stream/1` that takes a stream of integers.
+      It should perform the following operations lazily:
+      1. Multiply each number by 3.
+      2. Filter out any number not divisible by 2.
+      3. Take the first 5 results.
+      The function should return a new stream. Do not use `Enum.to_list` or `Enum.take`.
+eval:
+  assert:
+    wrap_in_module: true
+    assertion: |
+      # We test this by converting to a list at the end. The model should not do this.
+      infinite_stream = Stream.iterate(1, &(&1 + 1))
+      result_stream = <%= @module_name %>.process_stream(infinite_stream)
+      Enum.to_list(result_stream) == [6, 12, 18, 24, 30]

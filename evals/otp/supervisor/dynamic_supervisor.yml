@@ -1,0 +1,31 @@
+id: otp.supervisor.dynamic_supervisor.v1
+description: "Tests the ability to use a DynamicSupervisor to start children on demand."
+difficulty: hard
+tags: [otp, supervisor, dynamic-supervisor]
+type: write_code_and_assert
+code: |
+  defmodule MyApp.JobProcessor do
+    use Task
+
+    def start_link(job_id) do
+      Task.start_link(fn ->
+        :timer.sleep(100)
+        IO.puts("Processed job #{job_id}")
+      end)
+    end
+  end
+messages:
+  - type: user
+    text: |
+      Create a module `MyApp.JobSupervisor` that uses `DynamicSupervisor`.
+      It should implement two functions:
+      1. `start_link/0`: Starts the dynamic supervisor.
+      2. `start_job/2`: Takes the supervisor's `pid` and a `job_id`, and dynamically starts a `MyApp.JobProcessor` task as a child. It should return what `DynamicSupervisor.start_child/2` returns.
+eval:
+  assert:
+    wrap_in_module: false
+    assertion: |
+      {:ok, sup_pid} = MyApp.JobSupervisor.start_link()
+      assert Supervisor.count_children(sup_pid).active == 0
+      {:ok, _job_pid} = MyApp.JobSupervisor.start_job(sup_pid, 123)
+      assert Supervisor.count_children(sup_pid).active == 1

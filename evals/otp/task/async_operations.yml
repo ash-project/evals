@@ -1,0 +1,24 @@
+id: otp.task.async_operations.v1
+description: "Tests the ability to use Task.async and Task.await for parallel operations."
+difficulty: medium
+tags: [otp, task]
+type: write_code_and_assert
+messages:
+  - type: user
+    text: |
+      Write a function `fetch_data_in_parallel/0`.
+      Inside the function, define two anonymous functions that simulate network calls by sleeping and returning a value:
+      - One sleeps for 100ms and returns `:data1`.
+      - The other sleeps for 150ms and returns `:data2`.
+
+      Use `Task.async` to run these two operations in parallel.
+      Then, use `Task.await` (or `Task.yield_many`) to collect their results.
+      The function should return a list of the results, e.g., `[:data1, :data2]`. The order does not matter.
+eval:
+  assert:
+    wrap_in_module: true
+    assertion: |
+      # Check if the result is correct and it runs faster than sequential execution.
+      {time, result} = :timer.tc(fn -> <%= @module_name %>.fetch_data_in_parallel() end)
+      assert Enum.sort(result) == [:data1, :data2]
+      assert time < 200_000 # Should be around 150ms, so 200ms is a safe upper bound.

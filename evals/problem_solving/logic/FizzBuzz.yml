@@ -1,0 +1,22 @@
+id: problem_solving.logic.fizzbuzz.v1
+description: "Tests basic logic and control flow by implementing the FizzBuzz problem."
+difficulty: easy
+tags: [problem-solving, logic]
+type: write_code_and_assert
+messages:
+  - type: user
+    text: |
+      Write a function `fizzbuzz/1` that takes an integer `n`.
+      - If `n` is divisible by both 3 and 5, it should return "FizzBuzz".
+      - If `n` is divisible by 3, it should return "Fizz".
+      - If `n` is divisible by 5, it should return "Buzz".
+      - Otherwise, it should return the number `n` itself.
+      Use function heads with guards or a `cond` statement.
+eval:
+  assert:
+    wrap_in_module: true
+    assertion: |
+      assert <%= @module_name %>.fizzbuzz(3) == "Fizz" and
+      assert <%= @module_name %>.fizzbuzz(5) == "Buzz" and
+      assert <%= @module_name %>.fizzbuzz(15) == "FizzBuzz" and
+      assert <%= @module_name %>.fizzbuzz(4) == 4

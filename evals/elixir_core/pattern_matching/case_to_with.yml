@@ -1,0 +1,40 @@
+id: elixir.core.pattern_matching.case_to_with.v1
+description: "Tests the ability to refactor nested `case` statements into an idiomatic `with` block."
+difficulty: medium
+tags: [elixir-core, pattern-matching, refactoring, idiomatic-elixir]
+type: write_code_and_assert
+code: |
+  defmodule UnsafeProcessor do
+    def step1(data), do: {:ok, "processed_#{data}"}
+    def step2("processed_error"), do: {:error, :step2_failed}
+    def step2(data), do: {:ok, "final_#{data}"}
+  end
+
+  defmodule NestedHandler do
+    def process(data) do
+      case UnsafeProcessor.step1(data) do
+        {:ok, result1} ->
+          case UnsafeProcessor.step2(result1) do
+            {:ok, result2} ->
+              {:ok, result2}
+            {:error, reason} ->
+              {:error, reason}
+          end
+        {:error, reason} ->
+          {:error, reason}
+      end
+    end
+  end
+messages:
+  - type: user
+    text: |
+      The `NestedHandler` module contains a `process/1` function with nested `case` statements.
+      Please refactor this function to use a `with` statement for better readability.
+      Return the entire refactored `NestedHandler` module.
+eval:
+  assert:
+    # We are replacing a module, so no wrapping needed.
+    wrap_in_module: false
+    assertion: |
+      assert NestedHandler.process("data") == {:ok, "final_processed_data"} and
+      assert NestedHandler.process("error") == {:error, :step2_failed}

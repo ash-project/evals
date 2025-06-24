@@ -1,0 +1,18 @@
+id: elixir.core.data_structures.map_and_struct.v1
+description: "Tests the ability to define and work with Elixir structs."
+difficulty: easy
+tags: [elixir-core, data-structures, map, struct]
+type: write_code_and_assert
+messages:
+  - type: user
+    text: |
+      Define a struct named `User` with two fields: `name` (a string) and `age` (an integer with a default value of 0).
+      Then, write a function `make_birthday/1` that takes a `User` struct and returns a new `User` struct with the age incremented by 1.
+      Return the entire module containing both the struct definition and the function.
+eval:
+  assert:
+    wrap_in_module: false
+    assertion: |
+      user = %User{name: "Alice"}
+      birthday_user = User.make_birthday(user)
+      assert birthday_user == %User{name: "Alice", age: 1}

@@ -1,0 +1,23 @@
+id: otp.genserver.simple_counter.v1
+description: "Tests the ability to implement a basic GenServer for a stateful counter."
+difficulty: medium
+tags: [otp, genserver]
+type: write_code_and_assert
+messages:
+  - type: user
+    text: |
+      Create a GenServer module named `Counter` that maintains a number as its state.
+      It should implement the following API:
+      - `start_link(initial_value)`: Starts the GenServer.
+      - `increment(pid)`: Increments the counter by 1. Should be a `cast`.
+      - `decrement(pid)`: Decrements the counter by 1. Should be a `cast`.
+      - `value(pid)`: Returns the current value of the counter. Should be a `call`.
+eval:
+  assert:
+    wrap_in_module: false
+    assertion: |
+      {:ok, pid} = Counter.start_link(10)
+      :ok = Counter.increment(pid)
+      :ok = Counter.increment(pid)
+      :ok = Counter.decrement(pid)
+      Counter.value(pid) == 11

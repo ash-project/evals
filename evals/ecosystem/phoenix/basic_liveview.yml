@@ -1,0 +1,25 @@
+id: ecosystem.phoenix.basic_liveview.v1
+description: "Tests creating a simple, stateful Phoenix LiveView component."
+difficulty: hard
+tags: [ecosystem, phoenix, liveview]
+type: write_code_and_assert
+install:
+  - package: phoenix_live_view
+    version: ~> 0.20
+messages:
+  - type: user
+    text: |
+      Create a Phoenix LiveView module `MyAppWeb.CounterLive`.
+      It should maintain a `count` in its assigns.
+      - The `mount/3` function should initialize `count` to 0.
+      - The `render/1` function should display the current count and include two buttons: one with a `phx-click="inc"` event to increment the count, and another with `phx-click="dec"` to decrement it.
+      - Implement `handle_event/3` for both "inc" and "dec" events to update the count in the socket assigns.
+eval:
+  assert:
+    # LiveView testing is complex to script. We'll check the module structure and callbacks.
+    # This is a good candidate for a more advanced eval type later.
+    wrap_in_module: false
+    assertion: |
+      assert function_exported?(MyAppWeb.CounterLive, :mount, 3)
+      assert function_exported?(MyAppWeb.CounterLive, :render, 1)
+      assert function_exported?(MyAppWeb.CounterLive, :handle_event, 3)

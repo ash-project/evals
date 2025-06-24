@@ -1,0 +1,31 @@
+id: ecosystem.ecto.writing_a_schema.v1
+description: "Tests the ability to define a basic Ecto.Schema with fields and types."
+difficulty: easy
+tags: [ecosystem, ecto, schema]
+type: write_code_and_assert
+install:
+  - package: ecto
+    version: ~> 3.11
+messages:
+  - type: user
+    text: |
+      Create an Ecto schema module named `MyApp.Post`.
+      It should map to the "posts" table and have the following fields:
+      - A primary key field `id` of type `:binary_id`.
+      - A `title` field of type `:string` that cannot be null.
+      - A `body` field of type `:string`.
+      - A `published_at` field of type `:utc_datetime`.
+      - Timestamps for insertion and updates.
+eval:
+  assert:
+    wrap_in_module: false
+    assertion: |
+      # Check the schema's defined fields
+      assert MyApp.Post.__schema__(:primary_key) == [:id]
+      assert MyApp.Post.__schema__(:type, :id) == :binary_id
+      assert MyApp.Post.__schema__(:type, :title) == :string
+      assert MyApp.Post.__schema__(:type, :body) == :string
+      assert MyApp.Post.__schema__(:type, :published_at) == :utc_datetime
+      assert MyApp.Post.__schema__(:type, :inserted_at) == :utc_datetime
+      # Check for `timestamps()` call
+      assert length(MyApp.Post.__schema__(:fields)) == 6

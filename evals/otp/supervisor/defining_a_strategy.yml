@@ -1,0 +1,33 @@
+id: otp.supervisor.defining_a_strategy.v1
+description: "Tests defining a supervisor with children and a `one_for_one` strategy."
+difficulty: hard
+tags: [otp, supervisor]
+type: write_code_and_assert
+code: |
+  defmodule MyApp.Worker do
+    use GenServer
+
+    def start_link(name) do
+      GenServer.start_link(__MODULE__, name, name: name)
+    end
+
+    def init(name), do: {:ok, name}
+  end
+messages:
+  - type: user
+    text: |
+      Using the provided `MyApp.Worker` module, create a Supervisor module named `MyApp.Supervisor`.
+      It should start and supervise two workers: `MyApp.Worker` with the name `Worker1` and `MyApp.Worker` with the name `Worker2`.
+      Use the `one_for_one` supervision strategy.
+      Implement the `start_link/0` function and the `init/1` callback.
+eval:
+  assert:
+    wrap_in_module: false
+    assertion: |
+      {:ok, sup_pid} = MyApp.Supervisor.start_link()
+      assert Process.alive?(sup_pid)
+      w1 = Process.whereis(Worker1)
+      w2 = Process.whereis(Worker2)
+      assert w1 != nil and Process.alive?(w1)
+      assert w2 != nil and Process.alive?(w2)
+      Supervisor.count_children(sup_pid).active == 2

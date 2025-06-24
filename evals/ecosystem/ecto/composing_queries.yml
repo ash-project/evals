@@ -1,0 +1,36 @@
+id: ecosystem.ecto.composing_queries.v1
+description: "Tests the ability to compose Ecto queries and use `where` and `select`."
+difficulty: medium
+tags: [ecosystem, ecto, query]
+type: write_code_and_assert
+install:
+  - package: ecto
+    version: ~> 3.11
+code: |
+  defmodule MyApp.User do
+    use Ecto.Schema
+
+    schema "users" do
+      field :name, :string
+      field :email, :string
+      field :age, :integer
+      field :is_active, :boolean, default: true
+    end
+  end
+messages:
+  - type: user
+    text: |
+      Using the provided `MyApp.User` Ecto schema, write a function `active_user_emails/1`.
+      This function should take an `age_limit` and return an Ecto.Query that selects the `email` of all active users (`is_active: true`) who are older than the given `age_limit`.
+      Return only the function, not the module.
+eval:
+  assert:
+    wrap_in_module: true
+    assertion: |
+      alias Ecto.Query
+      query = <%= @module_name %>.active_user_emails(30)
+      assert query.select.fields == [{{:., [], [{:&, [], [0]}, :email]}, []}]
+      wheres = Ecto.Query.get_query_expr(query, :where).exprs
+      assert length(wheres) == 2
+      assert inspect(wheres) =~ "u.is_active"
+      assert inspect(wheres) =~ "u.age > ^30"

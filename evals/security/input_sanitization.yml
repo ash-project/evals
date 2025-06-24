@@ -1,0 +1,23 @@
+id: security.input_sanitization.v1
+description: "Tests knowledge of basic security practices, specifically HTML sanitization."
+difficulty: medium
+tags: [security, sanitization, phoenix]
+type: write_code_and_assert
+install:
+  - package: phoenix_html
+    version: ~> 4.1
+messages:
+  - type: user
+    text: |
+      A user can submit a comment, but we need to prevent XSS attacks.
+      Write a function `sanitize_comment/1` that takes a string containing potentially malicious HTML and sanitizes it.
+      It should allow basic tags like `<p>` and `<b>` but strip out `<script>` tags and `onclick` attributes.
+      Use functions available in the `phoenix_html` package.
+eval:
+  assert:
+    wrap_in_module: true
+    assertion: |
+      safe_html = "<p>Hello <b>world</b></p>"
+      malicious_html = ~s(<p onclick="alert('pwned')">Hello</p><script>alert('xss')</script>)
+      assert <%= @module_name %>.sanitize_comment(safe_html) == safe_html
+      assert <%= @module_name %>.sanitize_comment(malicious_html) == "<p>Hello</p>"

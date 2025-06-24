@@ -1,0 +1,22 @@
+id: otp.genserver.state_management.v1
+description: "Tests GenServer state management with a key-value store."
+difficulty: medium
+tags: [otp, genserver]
+type: write_code_and_assert
+messages:
+  - type: user
+    text: |
+      Implement a GenServer named `KVStore` that acts as a simple key-value store.
+      The state should be a Map.
+      Provide the following functions:
+      - `start_link()`: Starts the store with an empty map.
+      - `put(pid, key, value)`: Stores a value. This should be a `cast`.
+      - `get(pid, key)`: Retrieves a value. This should be a `call`. It should return `{:ok, value}` or `:not_found`.
+eval:
+  assert:
+    wrap_in_module: false
+    assertion: |
+      {:ok, pid} = KVStore.start_link()
+      assert KVStore.get(pid, :a) == :not_found
+      :ok = KVStore.put(pid, :a, 100)
+      assert KVStore.get(pid, :a) == {:ok, 100}

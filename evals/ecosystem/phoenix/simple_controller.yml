@@ -1,0 +1,33 @@
+id: ecosystem.phoenix.simple_controller.v1
+description: "Tests writing a basic Phoenix controller action that renders a JSON response."
+difficulty: medium
+tags: [ecosystem, phoenix, controller]
+type: write_code_and_assert
+install:
+  - package: phoenix
+    version: ~> 1.7
+messages:
+  - type: user
+    text: |
+      Write a Phoenix controller module `MyAppWeb.HealthController`.
+      It should have one action, `check/2`, that takes a `conn` and `_params`.
+      The action should return a JSON response with a status of 200 and a body of `%{status: "ok"}`.
+      You will need to `use MyAppWeb, :controller` and import `Phoenix.Controller`.
+eval:
+  assert:
+    wrap_in_module: false
+    assertion: |
+      # Mock the conn and controller functions for testing
+      defmodule MyAppWeb do
+        defmacro __using__(which) when is_atom(which) do
+          quote do
+            import Plug.Conn
+            import Phoenix.Controller
+          end
+        end
+      end
+
+      conn = %Plug.Conn{status: nil, resp_body: nil, halted: false} |> Plug.Conn.put_resp_content_type("application/json")
+      result_conn = MyAppWeb.HealthController.check(conn, %{})
+      assert result_conn.status == 200
+      assert result_conn.resp_body == ~s({"status":"ok"})

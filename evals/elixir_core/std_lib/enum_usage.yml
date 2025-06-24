@@ -1,0 +1,29 @@
+id: elixir.core.std_lib.enum_usage.v1
+description: "Tests the ability to chain multiple Enum functions to process a collection."
+difficulty: medium
+tags: [elixir-core, std-lib, enum]
+type: write_code_and_assert
+code: |
+  users = [
+    %{name: "John", age: 30, city: "New York", active: true},
+    %{name: "Jane", age: 25, city: "London", active: false},
+    %{name: "Doe", age: 35, city: "New York", active: true},
+    %{name: "Smith", age: 40, city: "Paris", active: true}
+  ]
+messages:
+  - type: user
+    text: |
+      Given the list of user maps, write a function `get_active_new_york_users_names/1` that takes the list and returns a list of names of all active users from "New York", sorted alphabetically.
+      Use a pipeline with `Enum` functions.
+      Return just the function.
+eval:
+  assert:
+    wrap_in_module: true
+    assertion: |
+      users = [
+        %{name: "John", age: 30, city: "New York", active: true},
+        %{name: "Jane", age: 25, city: "London", active: false},
+        %{name: "Doe", age: 35, city: "New York", active: true},
+        %{name: "Smith", age: 40, city: "Paris", active: true}
+      ]
+      <%= @module_name %>.get_active_new_york_users_names(users) == ["Doe", "John"]
