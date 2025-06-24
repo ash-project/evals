@@ -13,6 +13,7 @@ A comprehensive evaluation framework for testing and comparing AI language model
 
 ## Roadmap
 
+- For `write_code_and_assert` type, more complex setup tasks where the LLM only needs to generate a subset of a response, not all the code.
 - Different types of evals, like `response_contains`,  `response_doesnt_contain`, and also `llm_judge` where you ask a separate judge LLM if a certain property is attained by the output.
 - The ability to experiment with different system prompts, i.e does "you are an expert Elixir developer" matter?
 
