@@ -27,7 +27,7 @@ defmodule Evals.Common do
         "gpt-4.1": LangChain.ChatModels.ChatOpenAI.new!(%{model: "gpt-4.1"}),
         "claude sonnet 4":
           LangChain.ChatModels.ChatAnthropic.new!(%{model: "claude-sonnet-4-20250514"}),
-        "gemini-2.5-flash": LangChain.ChatModels.ChatGoogleAI.new!(%{model: "gemini-2.5-flash"})
+        "gemini-2.5-pro": LangChain.ChatModels.ChatGoogleAI.new!(%{model: "gemini-2.5-pro"})
       ],
       Keyword.put(opts, :title, "Flagship Models")
     )

@@ -170,7 +170,7 @@ defmodule Evals do
           script_text = EEx.eval_string(script, assigns: assigns)
 
           full_code =
-            "#{code}\nrequire ExUnit.Assertions\nimport ExUnit.Assertions\n#{script_text}"
+            "#{code}\nimport ExUnit.Assertions\n#{script_text}"
 
           {full_code, script_text}
 
@@ -415,6 +415,8 @@ defmodule Evals do
     end
   rescue
     e ->
+      :timer.sleep(to_timeout(second: 10))
+
       if retries_left == 0 do
         reraise e, __STACKTRACE__
       else
