@@ -19,6 +19,7 @@ defmodule Evals.MixProject do
       {:yaml_elixir, "~> 2.0"},
       {:spark, "~> 2.2"},
       {:igniter, "~> 0.6", only: [:dev, :test]},
+      {:mock, "~> 0.3.9", only: :test},
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:ex_check, "~> 0.12", only: [:dev, :test]},
       {:dialyxir, ">= 0.0.0", only: [:dev, :test], runtime: false},
