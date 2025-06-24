@@ -68,7 +68,7 @@ defmodule Evals.Common do
 
   """
   @spec gemini(keyword()) :: map()
-    def gemini(opts \\ []) do
+  def gemini(opts \\ []) do
     Evals.report(
       [
         "gemini-2.5-flash": LangChain.ChatModels.ChatGoogleAI.new!(%{model: "gemini-2.5-flash"}),

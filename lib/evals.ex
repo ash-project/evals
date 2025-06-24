@@ -426,7 +426,7 @@ defmodule Evals do
     if opts.only do
       Path.wildcard(opts.only)
     else
-      Path.wildcard("evals/**/*.yml")
+      Path.wildcard("evals/*/*")
     end
     # Only process regular files, not directories
     |> Enum.filter(&File.regular?/1)
