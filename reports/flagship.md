@@ -7,23 +7,46 @@ OVERALL SUMMARY:
 
 With usage rules:
   claude sonnet 4    | 100.0%
-  gemini-2.5-pro     | 100.0%
-  gpt-4.1            | 92.5%
+  gemini-2.5-pro     | 97.5%
+  gpt-4.1            | 95.0%
 
 Without usage rules:
-  gpt-4.1            | 80.0%
   claude sonnet 4    | 77.8%
+  gpt-4.1            | 77.8%
   gemini-2.5-pro     | 68.9%
+
+CATEGORY SUMMARIES:
+--------------------------------------------------------------------------------
+
+ASH - With usage rules:
+  claude sonnet 4    | 100.0%
+  gemini-2.5-pro     | 100.0%
+  gpt-4.1            | 100.0%
+
+ASH - Without usage rules:
+  claude sonnet 4    | 0.0%
+  gemini-2.5-pro     | 0.0%
+  gpt-4.1            | 0.0%
+
+ELIXIR - With usage rules:
+  claude sonnet 4    | 100.0%
+  gemini-2.5-pro     | 97.1%
+  gpt-4.1            | 94.3%
+
+ELIXIR - Without usage rules:
+  claude sonnet 4    | 87.5%
+  gpt-4.1            | 87.5%
+  gemini-2.5-pro     | 77.5%
 
 DETAILED RESULTS:
 --------------------------------------------------------------------------------
 
 ASH:
-  require-ash-query (no usage rules):
+  require-ash-query - correctness (no usage rules):
     claude sonnet 4      | 0.0%
     gemini-2.5-pro       | 0.0%
-    gpt-4.1              | 20.0%
-  require-ash-query (with usage rules):
+    gpt-4.1              | 0.0%
+  require-ash-query - correctness (with usage rules):
     claude sonnet 4      | 100.0%
     gemini-2.5-pro       | 100.0%
     gpt-4.1              | 100.0%
@@ -75,8 +98,8 @@ ELIXIR:
     gpt-4.1              | 0.0%
   parallel-map - idiomatic (with usage rules):
     claude sonnet 4      | 100.0%
-    gemini-2.5-pro       | 100.0%
-    gpt-4.1              | 40.0%
+    gemini-2.5-pro       | 80.0%
+    gpt-4.1              | 60.0%
   parallel-map - performance (no usage rules):
     claude sonnet 4      | 100.0%
     gemini-2.5-pro       | 100.0%

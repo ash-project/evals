@@ -27,5 +27,5 @@ install:
     version: ~> 3.5
 eval:
   assert:
-    assertion: |
-      inspect(result.filter) == "#Ash.Filter<title == \"Ash\">"
+    - name: "correctness"
+      assertion: inspect(result.filter) == "#Ash.Filter<title == \"Ash\">"
