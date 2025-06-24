@@ -18,6 +18,64 @@ A evaluation tool for testing and comparing AI language models on various coding
 - The ability to experiment with different system prompts, i.e does "you are an expert Elixir developer" matter?
 - The ability to benchmark fully agentic flows like multi-turn working with hex docs search, plan files, custom context etc.
 
+## Report
+
+We only have a few evals here, but eventually this will be expensive for me to
+operate, so its not running in CI etc. I will run it when I feel like its worth
+running again, when the are more evals etc. Others are encouraged to run this
+locally with their own keys if they want to throw a few coins in the machine to
+help out.
+
+This was run with:
+
+```elixir
+Evals.Common.flagship(iterations: 2, usage_rules: :compare) |> IO.puts()
+```
+
+================================================================================
+Flagship Models
+Iterations: 2
+================================================================================
+
+OVERALL SUMMARY:
+----------------------------------------
+
+With usage rules:
+  claude sonnet 3.7  | 100.0%
+  claude sonnet 4    | 100.0%
+  gpt-4.1            | 100.0%
+  gpt-4o             | 50.0%
+
+Without usage rules:
+  claude sonnet 3.7  | 50.0%
+  claude sonnet 4    | 50.0%
+  gpt-4.1            | 50.0%
+  gpt-4o             | 50.0%
+
+DETAILED RESULTS:
+--------------------------------------------------------------------------------
+
+ASH:
+  require-ash-query (no usage rules):
+    claude sonnet 3.7    | 0.0%
+    claude sonnet 4      | 0.0%
+    gpt-4.1              | 0.0%
+    gpt-4o               | 0.0%
+  require-ash-query (with usage rules):
+    claude sonnet 3.7    | 100.0%
+    claude sonnet 4      | 100.0%
+    gpt-4.1              | 100.0%
+    gpt-4o               | 50.0%
+
+ELIXIR:
+  simple-addition (no usage rules):
+    claude sonnet 3.7    | 100.0%
+    claude sonnet 4      | 100.0%
+    gpt-4.1              | 100.0%
+    gpt-4o               | 100.0%
+
+================================================================================
+
 ## Quick Start
 
 ```elixir

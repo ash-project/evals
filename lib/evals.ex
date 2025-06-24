@@ -262,7 +262,7 @@ defmodule Evals do
 
     system_prompt =
       if eval[:usage_rules] && eval[:install] do
-        packages = eval[:install] |> Enum.map(& &1[:package]) |> Enum.join(", ")
+        packages = eval[:install] |> Enum.map_join(", ", & &1[:package])
 
         script =
           """
