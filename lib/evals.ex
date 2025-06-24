@@ -26,7 +26,7 @@ defmodule Evals do
         ],
         iterations: [
           type: :integer,
-          default: 5,
+          default: 1,
           doc: "The number of iterations to run the evaluation. The average score is used."
         ]
       ]
@@ -296,12 +296,12 @@ defmodule Evals do
     """
   end
 
-  defp result(%{model: model, type: :write_code_and_assert}, messages) do
+  defp result(%{model: model, type: :write_code_and_assert} = eval, messages, retries_left \\ 10) do
     {:ok, %{last_message: %{content: content}}} =
       %{llm: model}
       |> LLMChain.new!()
       |> LLMChain.add_messages(messages)
-      |> LLMChain.run(mode: :while_needs_response, max_retry_count: 12)
+      |> LLMChain.run(mode: :until_success)
 
     case content do
       "```elixir\n" <> rest ->
@@ -310,6 +310,13 @@ defmodule Evals do
       content ->
         content
     end
+  rescue
+    e ->
+      if retries_left == 0 do
+        reraise e, __STACKTRACE__
+      else
+        result(eval, messages, retries_left - 1)
+      end
   end
 
   defp evals(opts) do

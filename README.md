@@ -22,7 +22,6 @@ models = [
 
 # Run evaluations and get a report
 {results, report} = Evals.report(models,
-  iterations: 5,
   usage_rules: :compare,
   title: "Model Comparison",
   format: "summary"
@@ -45,7 +44,7 @@ report = Evals.Common.flagship(usage_rules: :compare, format: "summary")
 IO.puts(report)
 
 # Full detailed report
-report = Evals.Common.flagship(usage_rules: :compare, format: "full")
+report = Evals.Common.flagship(usage_rules: :compare, format: :full)
 IO.puts(report)
 ```
 
@@ -60,7 +59,7 @@ This compares:
 Compare different GPT model variants:
 
 ```elixir
-report = Evals.Common.gpt(usage_rules: :compare, iterations: 10)
+report = Evals.Common.gpt(usage_rules: :compare)
 IO.puts(report)
 ```
 
@@ -165,7 +164,7 @@ eval:
 Runs evaluations and returns raw results.
 
 **Options:**
-- `:iterations` - Number of runs per test (default: 5)
+- `:iterations` - Number of runs per test (default: 1). Higher iterations will cause much longer evaluation times due to rate limits
 - `:usage_rules` - `:compare`, `true`, or `false` (default: `false`)
 - `:only` - Limit to specific file pattern
 - `:debug` - Enable debug output
@@ -177,7 +176,7 @@ Runs evaluations and returns formatted report.
 
 **Additional Report Options:**
 - `:title` - Custom report title
-- `:format` - `"summary"` or `"full"` (default: `"full"`)
+- `:format` - `:summary` or `:full` (default: `:full`)
 
 ### Usage Rules
 
@@ -206,7 +205,7 @@ Shows only model averages, optionally broken down by usage rules:
 ```
 ================================================================================
 Model Performance Comparison
-Iterations: 5
+Iterations: 1
 ================================================================================
 
 OVERALL SUMMARY:

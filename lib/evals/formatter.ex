@@ -32,7 +32,7 @@ defmodule Evals.Formatter do
     model_summary_lines = format_model_summary(results, opts)
     lines = lines ++ model_summary_lines
 
-    format = Keyword.get(report_opts, :format, "full")
+    format = Keyword.get(report_opts, :format, :full)
 
     lines =
       case format do
