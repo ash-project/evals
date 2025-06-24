@@ -15,7 +15,7 @@ defmodule Evals.CommonTest do
           model_names = Keyword.keys(models)
           assert :"gpt-4.1" in model_names
           assert :"claude sonnet 4" in model_names
-          assert :"gemini-2.5-flash" in model_names
+          assert :"gemini-2.5-pro" in model_names
 
           {%{}, "Flagship Models Report"}
         end do

@@ -137,4 +137,3 @@ defmodule Mix.Tasks.Evals.Report do
     Mix.raise("Unknown report type: #{type}. Expected: flagship, gpt, gemini, or anthropic")
   end
 end
-

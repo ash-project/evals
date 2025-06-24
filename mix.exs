@@ -8,6 +8,9 @@ defmodule Evals.MixProject do
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
+      dialyzer: [
+        plt_add_apps: [:mix]
+      ],
       deps: deps()
     ]
   end
