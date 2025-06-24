@@ -3,14 +3,16 @@ messages:
   - type: user
     text: |
       Write a function called `balanced?` that checks if a binary tree is height-balanced.
-      
+
       A binary tree is represented as:
       - `nil` for an empty tree
       - `{:node, value, left, right}` for a node with a value and left/right subtrees
-      
+
       A tree is balanced if for every node, the heights of its left and right subtrees differ by at most 1.
-      
+
       Return just the function(s) required, not wrapped in a module.
+install:
+  - package: elixir
 eval:
   assert:
     wrap_in_module: true
@@ -18,17 +20,17 @@ eval:
       # Test cases
       empty = nil
       single = {:node, 1, nil, nil}
-      balanced = {:node, 1, 
+      balanced = {:node, 1,
                    {:node, 2, {:node, 4, nil, nil}, {:node, 5, nil, nil}},
                    {:node, 3, {:node, 6, nil, nil}, nil}}
       unbalanced = {:node, 1,
-                     {:node, 2, 
-                       {:node, 3, 
-                         {:node, 4, nil, nil}, 
-                         nil}, 
-                       nil}, 
+                     {:node, 2,
+                       {:node, 3,
+                         {:node, 4, nil, nil},
+                         nil},
+                       nil},
                      nil}
-      
+
       <%= @module_name %>.balanced?(empty) == true and
       <%= @module_name %>.balanced?(single) == true and
       <%= @module_name %>.balanced?(balanced) == true and

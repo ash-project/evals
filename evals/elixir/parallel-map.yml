@@ -1,0 +1,33 @@
+type: write_code_and_assert
+messages:
+  - type: user
+    text: |
+      Write a function called `parallel_map/2` that applies a function to each element of a list in parallel.
+
+      Your `parallel_map/2` function should:
+      - Take a list and a function as arguments
+      - Apply the function to each element in parallel
+      - Return a list of results in the same order as the input
+
+      Return just the function, not wrapped in a module.
+install:
+  - package: otp
+eval:
+  assert:
+    wrap_in_module: true
+    script: |
+      # Test parallel execution
+      start_time = System.monotonic_time(:millisecond)
+
+      result = <%= @module_name %>.parallel_map([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], fn x ->
+        :timer.sleep(2000)
+        x * 2
+      end)
+
+      end_time = System.monotonic_time(:millisecond)
+      execution_time = end_time - start_time
+
+      # Verify the result is correct (each number doubled)
+      expected = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+
+      result == expected and execution_time >= 2000 and execution_time <= 3500

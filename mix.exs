@@ -21,6 +21,7 @@ defmodule Evals.MixProject do
       {:langchain, "~> 0.3"},
       {:yaml_elixir, "~> 2.0"},
       {:spark, "~> 2.2"},
+      {:usage_rules, github: "ash-project/usage_rules"},
       {:igniter, "~> 0.6", only: [:dev, :test]},
       {:mock, "~> 0.3.9", only: :test},
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},

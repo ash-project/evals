@@ -159,9 +159,11 @@ defmodule Evals do
     {code, assigns} =
       if assert[:wrap_in_module] == true do
         mod = "Generated#{System.unique_integer([:positive])}"
-        {"defmodule #{mod} do\n#{result}\nend", %{module_name: mod}}
+        immutable_part = if eval[:immutable_code], do: "#{eval[:immutable_code]}\n", else: ""
+        {"#{immutable_part}defmodule #{mod} do\n#{result}\nend", %{module_name: mod}}
       else
-        {result, %{}}
+        immutable_part = if eval[:immutable_code], do: "#{eval[:immutable_code]}\n", else: ""
+        {"#{immutable_part}#{result}", %{}}
       end
 
     {code_with_assertion, graded_on} =
@@ -201,6 +203,7 @@ defmodule Evals do
     |> remap_key("tags", :tags)
     |> remap_key("type", :type, &String.to_atom/1)
     |> remap_key("code", :code)
+    |> remap_key("immutable_code", :immutable_code)
     |> remap_key("debug", :debug)
     |> remap_key(
       "install",
@@ -262,16 +265,34 @@ defmodule Evals do
 
     system_prompt =
       if eval[:usage_rules] && eval[:install] do
-        packages = eval[:install] |> Enum.map_join(", ", & &1[:package])
+        packages =
+          eval[:install]
+          |> Enum.reject(&(&1[:package] in ["elixir", "otp"]))
+          |> Enum.map_join(", ", & &1[:package])
+
+        builtins =
+          Enum.filter(eval[:install], &(&1[:package] in ["elixir", "otp"]))
+          |> Enum.map_join(", ", & &1[:package])
+
+        packages_list =
+          if packages == "" do
+            "packages = []"
+          else
+            """
+            packages =
+              Mix.install_project_dir()
+              |> Path.join("deps/{#{packages}}/usage-rules.md")
+              |> Path.wildcard()
+            """
+          end
 
         script =
           """
           #{mix_install(eval[:install])}
 
-          Mix.install_project_dir()
-          |> Path.join("deps/{#{packages}}/usage-rules.md")
-          |> Path.wildcard()
-          |> Enum.map_join("\n\n", fn path ->
+          #{packages_list}
+
+          Enum.map_join(packages, "\\n\\n", fn path ->
             name =
               path
               |> Path.split()
@@ -279,15 +300,27 @@ defmodule Evals do
               |> Enum.drop(1)
               |> Enum.at(0)
 
-          \"\"\"
-          <!-- \#{name}-start -->
-          ## \#{name} usage rules
-          \#{File.read!(path)}
-          <!-- \#{name}-end -->
-          \"\"\"
+            \"\"\"
+            <!-- \#{name}-start -->
+            ## \#{name} usage rules
+            \#{File.read!(path)}
+            <!-- \#{name}-end -->
+            \"\"\"
           end)
           |> then(fn rules ->
-            "<!-- usage-rules start -->\n" <> rules <> "\n<!-- usage-rules end -->"
+            builtins =
+              ~w(#{builtins})
+              |> Enum.map_join(fn name ->
+                path = "deps/usage_rules/priv/builtins/\#{name}.md"
+
+                \"\"\"
+                <!-- \#{name}-start -->
+                ## \#{name} usage rules
+                \#{File.read!(path)}
+                <!-- \#{name}-end -->
+                \"\"\"
+              end)
+            "<!-- usage-rules start -->\\n" <> builtins <> "\\n" <> rules <> "\\n<!-- usage-rules end -->"
           end)
           |> IO.puts()
           """
@@ -342,6 +375,21 @@ defmodule Evals do
         system_prompt
       end
 
+    system_prompt =
+      if eval[:immutable_code] do
+        """
+        #{system_prompt}
+
+        <immutable_code>
+        The following code will be available in your execution environment and cannot be modified:
+
+        #{eval[:immutable_code]}
+        </immutable_code>
+        """
+      else
+        system_prompt
+      end
+
     system_prompt <>
       "\nRespond with only the exact source code requested."
   end
@@ -379,13 +427,19 @@ defmodule Evals do
   end
 
   defp mix_install(install) do
-    """
-    Mix.install([
-      #{Enum.map_join(install, "\n", &"{:#{&1[:package]}, \"#{&1[:version]}\"}")}
-      ],
-      consolidate_protocols: false
-    )
-    """
+    case Enum.reject(install, &(&1[:package] in ["elixir", "otp"])) do
+      [] ->
+        ""
+
+      packages ->
+        """
+        Mix.install([
+          #{Enum.map_join(packages, "\n", &"{:#{&1[:package]}, \"#{&1[:version]}\"}")}
+          ],
+          consolidate_protocols: false
+        )
+        """
+    end
   end
 
   defp result(%{model: model, type: :write_code_and_assert} = eval, messages, retries_left \\ 10) do
