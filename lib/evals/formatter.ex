@@ -12,7 +12,7 @@ defmodule Evals.Formatter do
   ## Parameters
 
   - `results` - A map of evaluation results where keys are tuples of
-    `{model_name, category, name, usage_rules}` and values are scores
+    `{model_name, category, name, assertion_name, usage_rules}` and values are scores
   - `opts` - The validated options struct from `Evals.Options`
   - `report_opts` - A keyword list of report formatting options
 
@@ -27,7 +27,7 @@ defmodule Evals.Formatter do
 
   ## Examples
 
-      iex> results = %{{"model1", "cat1", "test1", false} => 0.8}
+      iex> results = %{{"model1", "cat1", "test1", "default", false} => 0.8}
       iex> opts = %Evals.Options{iterations: 1, usage_rules: false}
       iex> Evals.Formatter.format_report(results, opts, title: "My Report", format: :summary)
       ...> |> String.contains?("My Report")
@@ -78,7 +78,7 @@ defmodule Evals.Formatter do
     # Break down by usage rules when comparing
     results_by_model_and_rules =
       results
-      |> Enum.group_by(fn {{model_name, _, _, usage_rules}, _} ->
+      |> Enum.group_by(fn {{model_name, _, _, _, usage_rules}, _} ->
         {model_name, usage_rules}
       end)
 
@@ -120,7 +120,7 @@ defmodule Evals.Formatter do
     # Group results by model for better organization
     results_by_model =
       results
-      |> Enum.group_by(fn {{model_name, _, _, _}, _} -> model_name end)
+      |> Enum.group_by(fn {{model_name, _, _, _, _}, _} -> model_name end)
 
     model_averages =
       Enum.map(results_by_model, fn {model_name, model_results} ->
@@ -141,7 +141,7 @@ defmodule Evals.Formatter do
 
     categories =
       results
-      |> Enum.map(fn {{_, category, _, _}, _} -> category end)
+      |> Enum.map(fn {{_, category, _, _, _}, _} -> category end)
       |> Enum.uniq()
       |> Enum.sort()
 
@@ -157,32 +157,37 @@ defmodule Evals.Formatter do
   defp format_category_results(results, category, opts) do
     category_results =
       results
-      |> Enum.filter(fn {{_, cat, _, _}, _} -> cat == category end)
-      |> Enum.group_by(fn {{_, _, name, usage_rules}, _} -> {name, usage_rules} end)
+      |> Enum.filter(fn {{_, cat, _, _, _}, _} -> cat == category end)
+      |> Enum.group_by(fn {{_, _, name, assertion_name, usage_rules}, _} ->
+        {name, assertion_name, usage_rules}
+      end)
 
     test_lines =
-      Enum.flat_map(category_results, fn {{name, usage_rules}, test_results} ->
-        format_test_results(name, usage_rules, test_results, opts)
+      Enum.flat_map(category_results, fn {{name, assertion_name, usage_rules}, test_results} ->
+        format_test_results(name, assertion_name, usage_rules, test_results, opts)
       end)
 
     ["\n#{String.upcase(category)}:"] ++ test_lines
   end
 
-  @spec format_test_results(String.t(), boolean(), list(), Evals.Options.t()) :: [String.t()]
-  defp format_test_results(name, usage_rules, test_results, opts) do
+  @spec format_test_results(String.t(), String.t(), boolean(), list(), Evals.Options.t()) :: [
+          String.t()
+        ]
+  defp format_test_results(name, assertion_name, usage_rules, test_results, opts) do
     usage_suffix = if usage_rules, do: " (with usage rules)", else: " (no usage rules)"
+    assertion_suffix = if assertion_name != "default", do: " - #{assertion_name}", else: ""
 
     test_header =
       if opts.usage_rules == :compare do
-        "  #{name}#{usage_suffix}:"
+        "  #{name}#{assertion_suffix}#{usage_suffix}:"
       else
-        "  #{name}:"
+        "  #{name}#{assertion_suffix}:"
       end
 
     result_lines =
       test_results
-      |> Enum.sort_by(fn {{model_name, _, _, _}, _} -> model_name end)
-      |> Enum.map(fn {{model_name, _, _, _}, score} ->
+      |> Enum.sort_by(fn {{model_name, _, _, _, _}, _} -> model_name end)
+      |> Enum.map(fn {{model_name, _, _, _, _}, score} ->
         percentage = Float.round(score * 100, 1)
         "    #{String.pad_trailing(model_name, 20)} | #{percentage}%"
       end)

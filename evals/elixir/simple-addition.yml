@@ -4,6 +4,7 @@ messages:
     text: |
       Write a function called `add` that adds two numbers. Return just the function, not wrapped in a module
 eval:
+  wrap_in_module: true
   assert:
-    wrap_in_module: true
-    assertion: "<%= @module_name %>.add(2, 3) == 5"
+    - name: "basic_addition"
+      assertion: "<%= @module_name %>.add(2, 3) == 5"

@@ -14,24 +14,25 @@ messages:
 install:
   - package: elixir
 eval:
+  wrap_in_module: true
   assert:
-    wrap_in_module: true
-    script: |
-      # Test cases
-      empty = nil
-      single = {:node, 1, nil, nil}
-      balanced = {:node, 1,
-                   {:node, 2, {:node, 4, nil, nil}, {:node, 5, nil, nil}},
-                   {:node, 3, {:node, 6, nil, nil}, nil}}
-      unbalanced = {:node, 1,
-                     {:node, 2,
-                       {:node, 3,
-                         {:node, 4, nil, nil},
+    - name: "empty_tree"
+      assertion: "<%= @module_name %>.balanced?(nil) == true"
+    - name: "single_node"
+      assertion: "<%= @module_name %>.balanced?({:node, 1, nil, nil}) == true"
+    - name: "balanced_tree"
+      script: |
+        balanced = {:node, 1,
+                     {:node, 2, {:node, 4, nil, nil}, {:node, 5, nil, nil}},
+                     {:node, 3, {:node, 6, nil, nil}, nil}}
+        <%= @module_name %>.balanced?(balanced) == true
+    - name: "unbalanced_tree"
+      script: |
+        unbalanced = {:node, 1,
+                       {:node, 2,
+                         {:node, 3,
+                           {:node, 4, nil, nil},
+                           nil},
                          nil},
-                       nil},
-                     nil}
-
-      <%= @module_name %>.balanced?(empty) == true and
-      <%= @module_name %>.balanced?(single) == true and
-      <%= @module_name %>.balanced?(balanced) == true and
-      <%= @module_name %>.balanced?(unbalanced) == false
+                       nil}
+        <%= @module_name %>.balanced?(unbalanced) == false

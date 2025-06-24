@@ -106,9 +106,14 @@ defmodule Evals do
         &run_single_eval(&1, tmp_dir, opts),
         timeout: :infinity
       )
-      |> Enum.reduce(%{}, fn {:ok, result}, acc ->
-        key = {result.model_name, result.category, result.name, result.usage_rules}
-        Map.update(acc, key, [result.grade], &[result.grade | &1])
+      |> Enum.reduce(%{}, fn {:ok, results}, acc ->
+        Enum.reduce(results, acc, fn result, acc ->
+          key =
+            {result.model_name, result.category, result.name, result.assertion_name,
+             result.usage_rules}
+
+          Map.update(acc, key, [result.grade], &[result.grade | &1])
+        end)
       end)
       |> Map.new(fn {key, value} -> {key, Enum.sum(value) / Enum.count(value)} end)
     after
@@ -118,11 +123,11 @@ defmodule Evals do
 
   # --- Private Helper Functions ---
 
-  @spec run_single_eval(eval :: map(), tmp_dir :: String.t(), opts :: struct()) :: map()
+  @spec run_single_eval(eval :: map(), tmp_dir :: String.t(), opts :: struct()) :: [map()]
   defp run_single_eval(eval, tmp_dir, opts) do
     messages = messages(eval, tmp_dir, opts)
     result = result(eval, messages)
-    {grade, error, graded_on} = grade(eval, result, tmp_dir)
+    assertion_results = grade(eval, result, tmp_dir)
 
     if eval[:debug] || opts.debug do
       IO.puts("""
@@ -136,28 +141,33 @@ defmodule Evals do
 
       #{Enum.map_join(String.split(result, "\n"), "\n", &"  #{&1}")}
       -------------
-      Graded on:
-
-      #{Enum.map_join(String.split(graded_on, "\n"), "\n", &"  #{&1}")}
-      #{if error, do: error}
+      Assertion Results:
+      #{Enum.map_join(assertion_results, "\n", fn {assertion_name, grade, error, graded_on} -> """
+        #{assertion_name}: #{grade}
+        #{Enum.map_join(String.split(graded_on, "\n"), "\n", &"  #{&1}")}
+        #{if error, do: error}
+        """ end)}
       =============
       """)
     end
 
-    %{
-      model_name: eval.model_name,
-      category: eval.category,
-      name: eval.name,
-      usage_rules: eval.usage_rules,
-      grade: grade
-    }
+    Enum.map(assertion_results, fn {assertion_name, grade, _error, _graded_on} ->
+      %{
+        model_name: eval.model_name,
+        category: eval.category,
+        name: eval.name,
+        assertion_name: assertion_name,
+        usage_rules: eval.usage_rules,
+        grade: grade
+      }
+    end)
   end
 
   @spec grade(eval :: map(), result :: String.t(), tmp_dir :: String.t()) ::
-          {0 | 1, String.t() | nil, String.t()}
-  defp grade(%{type: :write_code_and_assert, eval: %{assert: assert}} = eval, result, tmp_dir) do
+          [{String.t(), 0 | 1, String.t() | nil, String.t()}]
+  defp grade(%{type: :write_code_and_assert, eval: eval_config} = eval, result, tmp_dir) do
     {code, assigns} =
-      if assert[:wrap_in_module] == true do
+      if eval_config[:wrap_in_module] == true do
         mod = "Generated#{System.unique_integer([:positive])}"
         immutable_part = if eval[:immutable_code], do: "#{eval[:immutable_code]}\n", else: ""
         {"#{immutable_part}defmodule #{mod} do\n#{result}\nend", %{module_name: mod}}
@@ -166,32 +176,65 @@ defmodule Evals do
         {"#{immutable_part}#{result}", %{}}
       end
 
-    {code_with_assertion, graded_on} =
+    assertions = eval_config[:assert]
+
+    # Handle both single assertion (backward compatibility) and list of assertions
+    assertion_list =
       cond do
-        script = assert[:script] ->
-          script_text = EEx.eval_string(script, assigns: assigns)
-
-          full_code =
-            "#{code}\nimport ExUnit.Assertions\n#{script_text}"
-
-          {full_code, script_text}
-
-        assertion = assert[:assertion] ->
-          assertion_text = EEx.eval_string(assertion, assigns: assigns)
-
-          full_code =
-            "#{code}\nrequire ExUnit.Assertions\nExUnit.Assertions.assert #{assertion_text}"
-
-          {full_code, assertion_text}
-
-        true ->
-          raise "Eval assert must contain either an 'assertion' or a 'script' key."
+        is_list(assertions) -> assertions
+        is_map(assertions) -> [Map.put(assertions, :name, "default")]
+        true -> raise "Eval assert must be either a map or a list of maps."
       end
 
-    case write_and_eval(eval, tmp_dir, code_with_assertion) do
-      {_result, 0} -> {1, nil, graded_on}
-      {result, _} -> {0, result, graded_on}
-    end
+    Enum.map(assertion_list, fn assert ->
+      assertion_name = assert[:name] || "unnamed"
+
+      {code_with_assertion, graded_on} =
+        cond do
+          script = assert[:script] ->
+            script_text = EEx.eval_string(script, assigns: assigns)
+
+            full_code =
+              "#{code}\nimport ExUnit.Assertions\n#{script_text}"
+
+            {full_code, script_text}
+
+          assertion = assert[:assertion] ->
+            assertion_text = EEx.eval_string(assertion, assigns: assigns)
+
+            full_code =
+              "#{code}\nrequire ExUnit.Assertions\nExUnit.Assertions.assert #{assertion_text}"
+
+            {full_code, assertion_text}
+
+          contains = assert[:contains] ->
+            contains_text = EEx.eval_string(contains, assigns: assigns)
+
+            # For contains, we check if the original result contains the text
+            # No need to execute code, just check the string
+            {nil, contains_text}
+
+          true ->
+            raise "Eval assert must contain either an 'assertion', 'script', or 'contains' key."
+        end
+
+      case assert[:contains] do
+        nil ->
+          # Normal assertion or script execution
+          case write_and_eval(eval, tmp_dir, code_with_assertion) do
+            {_result, 0} -> {assertion_name, 1, nil, graded_on}
+            {result, _} -> {assertion_name, 0, result, graded_on}
+          end
+
+        contains_text ->
+          # Contains assertion - check if result contains the text
+          if String.contains?(result, contains_text) do
+            {assertion_name, 1, nil, graded_on}
+          else
+            {assertion_name, 0, "Text '#{contains_text}' not found in solution", graded_on}
+          end
+      end
+    end)
   end
 
   @spec from_yml(map()) :: map()
@@ -225,11 +268,27 @@ defmodule Evals do
     )
     |> remap_key("eval", :eval, fn eval ->
       eval
+      |> remap_key("wrap_in_module", :wrap_in_module)
       |> remap_key("assert", :assert, fn assert ->
-        assert
-        |> remap_key("wrap_in_module", :wrap_in_module)
-        |> remap_key("assertion", :assertion)
-        |> remap_key("script", :script)
+        cond do
+          is_list(assert) ->
+            Enum.map(assert, fn single_assert ->
+              single_assert
+              |> remap_key("name", :name)
+              |> remap_key("assertion", :assertion)
+              |> remap_key("script", :script)
+              |> remap_key("contains", :contains)
+            end)
+
+          is_map(assert) ->
+            assert
+            |> remap_key("assertion", :assertion)
+            |> remap_key("script", :script)
+            |> remap_key("contains", :contains)
+
+          true ->
+            assert
+        end
       end)
     end)
     |> Map.put(:usage_rules, false)

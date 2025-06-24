@@ -13,21 +13,29 @@ messages:
 install:
   - package: otp
 eval:
+  wrap_in_module: true
   assert:
-    wrap_in_module: true
-    script: |
-      # Test parallel execution
-      start_time = System.monotonic_time(:millisecond)
+    - name: "correctness"
+      script: |
+        # Test that the result is correct (each number doubled)
+        result = <%= @module_name %>.parallel_map([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], fn x ->
+          x * 2
+        end)
+        expected = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+        result == expected
+    - name: "idiomatic"
+      contains: "Task.async_stream"
+    - name: "performance"
+      script: |
+        # Test parallel execution timing
+        start_time = System.monotonic_time(:millisecond)
 
-      result = <%= @module_name %>.parallel_map([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], fn x ->
-        :timer.sleep(2000)
-        x * 2
-      end)
+        <%= @module_name %>.parallel_map([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], fn x ->
+          :timer.sleep(2000)
+          x * 2
+        end)
 
-      end_time = System.monotonic_time(:millisecond)
-      execution_time = end_time - start_time
+        end_time = System.monotonic_time(:millisecond)
+        execution_time = end_time - start_time
 
-      # Verify the result is correct (each number doubled)
-      expected = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
-
-      result == expected and execution_time >= 2000 and execution_time <= 3500
+        execution_time >= 2000 and execution_time <= 3500
