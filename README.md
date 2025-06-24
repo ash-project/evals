@@ -1,6 +1,6 @@
 # Evals
 
-A comprehensive evaluation framework for testing and comparing AI language models on various coding tasks. This framework allows you to run structured evaluations, compare model performance with and without usage rules, and generate detailed reports.
+A evaluation tool for testing and comparing AI language models on various coding tasks. This allows you to run structured evaluations, compare model performance with and without usage rules, and generate detailed reports.
 
 ## Features
 
