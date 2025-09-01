@@ -370,7 +370,7 @@ defmodule Evals do
             builtins =
               ~w(#{builtins})
               |> Enum.map_join(fn name ->
-                path = "deps/usage_rules/priv/builtins/\#{name}.md"
+                path = "deps/usage_rules/usage-rules/\#{name}.md"
 
                 \"\"\"
                 <!-- \#{name}-start -->
