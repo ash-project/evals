@@ -45,7 +45,7 @@ models = [
 {results, report} = Evals.report(models,
   usage_rules: :compare,
   title: "Model Comparison",
-  format: "summary"
+  format: :summary
 )
 
 IO.puts(report)
@@ -61,7 +61,7 @@ Compare the latest flagship models from OpenAI and Anthropic:
 
 ```elixir
 # Quick flagship comparison
-report = Evals.Common.flagship(usage_rules: :compare, format: "summary")
+report = Evals.Common.flagship(usage_rules: :compare, format: :summary)
 IO.puts(report)
 
 # Full detailed report
