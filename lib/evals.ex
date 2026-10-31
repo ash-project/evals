@@ -163,9 +163,33 @@ defmodule Evals do
     end)
   end
 
+  @doc false
   @spec grade(eval :: map(), result :: String.t(), tmp_dir :: String.t()) ::
           [{String.t(), 0 | 1, String.t() | nil, String.t()}]
-  defp grade(%{type: :write_code_and_assert, eval: eval_config} = eval, result, tmp_dir) do
+  def grade(%{type: :match_output, eval: eval_config} = eval, result, tmp_dir) do
+    expected_output = eval_config[:expected_output] || ""
+
+    code =
+      if eval[:immutable_code] do
+        "#{eval[:immutable_code]}\n#{result}"
+      else
+        result
+      end
+
+    case write_and_eval(eval, tmp_dir, code) do
+      {output, 0} ->
+        if String.trim(output) == String.trim(expected_output) do
+          [{"default", 1, nil, expected_output}]
+        else
+          [{"default", 0, output, expected_output}]
+        end
+
+      {output, _} ->
+        [{"default", 0, output, expected_output}]
+    end
+  end
+
+  def grade(%{type: :write_code_and_assert, eval: eval_config} = eval, result, tmp_dir) do
     {code, assigns} =
       if eval_config[:wrap_in_module] == true do
         mod = "Generated#{System.unique_integer([:positive])}"
@@ -237,8 +261,9 @@ defmodule Evals do
     end)
   end
 
+  @doc false
   @spec from_yml(map()) :: map()
-  defp from_yml(data) do
+  def from_yml(data) do
     data
     |> remap_key("id", :id)
     |> remap_key("description", :description)
@@ -269,6 +294,7 @@ defmodule Evals do
     |> remap_key("eval", :eval, fn eval ->
       eval
       |> remap_key("wrap_in_module", :wrap_in_module)
+      |> remap_key("expected_output", :expected_output)
       |> remap_key("assert", :assert, fn assert ->
         cond do
           is_list(assert) ->
@@ -317,7 +343,8 @@ defmodule Evals do
     end
   end
 
-  defp system_prompt(%{type: :write_code_and_assert} = eval, tmp_dir, opts) do
+  defp system_prompt(%{type: type} = eval, tmp_dir, opts)
+       when type in [:write_code_and_assert, :match_output] do
     system_prompt =
       opts.system_prompt ||
         "You are an Elixir programmer's assistant."
@@ -463,7 +490,8 @@ defmodule Evals do
     )
   end
 
-  defp write_and_eval(eval, tmp_dir, code) do
+  @doc false
+  def write_and_eval(eval, tmp_dir, code) do
     path = Path.join(tmp_dir, "#{System.unique_integer([:positive])}.ex")
 
     code =
@@ -501,7 +529,8 @@ defmodule Evals do
     end
   end
 
-  defp result(%{model: model, type: :write_code_and_assert} = eval, messages, retries_left \\ 10) do
+  defp result(%{model: model, type: type} = eval, messages, retries_left \\ 10)
+       when type in [:write_code_and_assert, :match_output] do
     {:ok, %{last_message: %{content: content}}} =
       %{llm: model}
       |> LLMChain.new!()
