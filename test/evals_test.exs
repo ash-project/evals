@@ -81,4 +81,61 @@ defmodule EvalsTest do
       end
     end
   end
+
+  describe "from_yml/1 and grade/3 for match_output" do
+    test "parses match_output eval configuration with expected_output" do
+      yaml_data = %{
+        "type" => "match_output",
+        "messages" => [
+          %{"type" => "user", "text" => "Write a script that prints 'Hello, World!'."}
+        ],
+        "eval" => %{
+          "expected_output" => "Hello, World!\n"
+        }
+      }
+
+      parsed = Evals.from_yml(yaml_data)
+
+      assert parsed.type == :match_output
+      assert parsed.eval.expected_output == "Hello, World!\n"
+    end
+
+    test "grades matching stdout as 1 ignoring leading and trailing whitespace" do
+      tmp_dir = Path.join(System.tmp_dir!(), "evals_test_#{System.unique_integer([:positive])}")
+      File.mkdir_p!(tmp_dir)
+
+      try do
+        eval =
+          Evals.from_yml(%{
+            "type" => "match_output",
+            "eval" => %{"expected_output" => "  Hello, World!\n"}
+          })
+
+        assert [{"default", 1, nil, "  Hello, World!\n"}] =
+                 Evals.grade(eval, ~s|IO.puts("Hello, World!")|, tmp_dir)
+      after
+        File.rm_rf!(tmp_dir)
+      end
+    end
+
+    test "grades mismatched stdout or non-zero exit as 0" do
+      tmp_dir = Path.join(System.tmp_dir!(), "evals_test_#{System.unique_integer([:positive])}")
+      File.mkdir_p!(tmp_dir)
+
+      try do
+        eval =
+          Evals.from_yml(%{
+            "type" => "match_output",
+            "eval" => %{"expected_output" => "Hello, World!"}
+          })
+
+        assert [{"default", 0, actual, "Hello, World!"}] =
+                 Evals.grade(eval, ~s|IO.puts("Wrong output")|, tmp_dir)
+
+        assert String.trim(actual) == "Wrong output"
+      after
+        File.rm_rf!(tmp_dir)
+      end
+    end
+  end
 end
